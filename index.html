@@ -1,0 +1,2505 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <!-- 뷰포트 설정 (확대 방지, 전체화면 대응) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- 전체 화면(PWA) 모드 지원 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#ffffff">
+    
+    <title>어르신 교통안전 및 정밀 인지 진단 앱</title>
+    
+    <!-- 폰트 및 아이콘 로드 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* 1. 기본 설정 */
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        html, body {
+            margin: 0; padding: 0;
+            background-color: #f0f2f5;
+            height: 100%; 
+            height: 100dvh; 
+            width: 100%;
+            overflow: hidden; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            font-family: 'Noto Sans KR', sans-serif;
+            word-break: keep-all; 
+        }
+
+        /* 2. 슬라이드 컨테이너 */
+        .slide-container {
+            width: 95%; 
+            max-width: 1280px; 
+            height: 90dvh; 
+            max-height: 900px;
+            background-color: #ffffff;
+            border-radius: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            position: relative; 
+            overflow-y: auto; 
+            overflow-x: hidden;
+            display: none;
+            flex-direction: column;
+            padding: 4vh 4vw;
+            border: 4px solid #ffaa00;
+            scrollbar-width: thin;
+            scrollbar-color: #ffaa00 #eee;
+        }
+        
+        /* 모바일/태블릿 대응 */
+        @media (max-width: 1024px) {
+            .slide-container {
+                width: 96%; 
+                height: 92dvh; 
+                max-height: none;
+                border-radius: 20px; 
+                border: 3px solid #ffaa00; 
+                padding: 20px;
+            }
+        }
+
+        .slide-container::-webkit-scrollbar { width: 8px; }
+        .slide-container::-webkit-scrollbar-thumb { background-color: #ffaa00; border-radius: 10px; }
+        .slide-container::-webkit-scrollbar-track { background-color: #eee; }
+
+        .slide-container.active { display: flex; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.99); } to { opacity: 1; transform: scale(1); } }
+
+        /* 3. 폰트 및 텍스트 */
+        h1 { 
+            font-family: 'Jua', sans-serif; 
+            font-size: clamp(32px, 5vw, 60px); 
+            color: #333; margin: 0 0 2vh 0; line-height: 1.2; 
+            white-space: nowrap; text-align: center;
+        }
+        h2 { 
+            font-family: 'Jua', sans-serif; 
+            font-size: clamp(24px, 4vw, 40px);
+            color: #333; margin: 0 0 2vh 0; line-height: 1.3; 
+            text-align: left; letter-spacing: -1px; 
+        }
+        p { 
+            font-size: clamp(18px, 2.5vw, 24px);
+            color: #444; line-height: 1.6; margin-bottom: 2vh; font-weight: 500;
+        }
+        .highlight { color: #d35400; font-weight: bold; }
+
+        /* 4. 레이아웃 */
+        .center-box { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; width: 100%; margin: auto 0; }
+        .split-box { display: flex; flex-direction: row; gap: 40px; height: 100%; align-items: center; justify-content: center; }
+        .split-box > div { flex: 1; width: 100%; }
+        
+        /* 태블릿 세로 및 모바일 레이아웃 최적화 */
+        @media (max-width: 1024px) {
+            .split-box { 
+                flex-direction: column-reverse; 
+                gap: 20px; 
+                overflow-y: auto; 
+                justify-content: flex-start; 
+                padding-top: 30px; 
+                align-items: center; 
+            }
+            .split-box > div { 
+                flex: none; 
+                width: 100%; 
+                display: flex;
+                flex-direction: column;
+                align-items: center; 
+            }
+            .text-area { 
+                padding-bottom: 30px; 
+                text-align: center; 
+                width: 100%;
+            }
+            .text-area h2, .center-box h2 {
+                text-align: center;
+                word-break: keep-all;
+                width: 100%;
+            }
+            .text-area > div, .center-box > div {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .btn-option {
+                max-width: 500px;
+                margin: 0 auto 12px auto;
+            }
+            .center-box { 
+                justify-content: flex-start; 
+                padding-top: 50px; 
+            }
+            #page-q9 .split-box {
+                flex-direction: column; /* 그림 위, 문제 아래 */
+            }
+        }
+
+        /* 5. 미디어 */
+        .media-group { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .media-wrapper { width: 100%; aspect-ratio: 16/9; height: auto; border-radius: 20px; overflow: hidden; background: #000; border: 2px solid #ddd; box-shadow: 0 5px 15px rgba(0,0,0,0.05); position: relative; }
+        .media-wrapper iframe { width: 100%; height: 100%; border: none; }
+        /* [NEW] 소리 켜기 버튼 (자동으로 소리가 켜지지 않는 기기용) */
+        .btn-sound-on {
+            display: none; position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%);
+            z-index: 5; align-items: center; gap: 10px; white-space: nowrap;
+            padding: 14px 28px; border: 4px solid #fff; border-radius: 50px;
+            background: #e74c3c; color: #fff; font-family: 'Jua', sans-serif;
+            font-size: clamp(22px, 3vw, 30px); cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.45); animation: soundPulse 1.2s ease-in-out infinite;
+        }
+        .btn-sound-on.show { display: flex; }
+        @keyframes soundPulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.07); }
+        }
+        .video-guide-text { 
+            text-align: center; 
+            font-size: clamp(18px, 2.5vw, 24px);
+            color: #2980b9; font-weight: bold; margin-bottom: 10px; font-family: 'Jua', sans-serif; 
+        }
+
+        /* 6. 버튼 */
+        .btn-start { 
+            background: #ff6b6b; color: white; border: none; 
+            padding: 2vh 5vw; 
+            font-size: clamp(28px, 4vw, 42px); 
+            font-family: 'Jua', sans-serif; border-radius: 80px; cursor: pointer; 
+            box-shadow: 0 6px 0 #c0392b; transition: transform 0.1s; margin-top: 4vh; 
+        }
+        .btn-start:active { transform: translateY(6px); box-shadow: none; }
+
+        /* [NEW] 인지 과제 (표지판 기억 · 시계 그리기 · 신호등 · 선 잇기) */
+        .task-box { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin: auto 0; text-align: center; gap: 14px; padding-top: 40px; }
+        .task-box h2 { text-align: center; margin: 0; }
+        .task-guide { font-size: clamp(18px, 2.4vw, 24px); color: #2980b9; font-weight: bold; margin: 0; line-height: 1.5; }
+        .task-btn { font-size: clamp(22px, 3vw, 30px); padding: 14px 44px; margin-top: 4px; }
+        .task-btn:disabled { opacity: 0.35; cursor: default; }
+        .task-btn-sub { font-family: 'Jua', sans-serif; font-size: clamp(18px, 2.4vw, 24px); padding: 12px 26px; border-radius: 50px; border: 3px solid #bbb; background: #fff; color: #555; cursor: pointer; }
+        .task-btn-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; align-items: center; }
+
+        .sign-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; max-width: 560px; }
+        .sign-item { background: #fff; border: 4px solid #eee; border-radius: 20px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-family: 'Jua', sans-serif; font-size: clamp(18px, 2.4vw, 24px); color: #333; }
+        .sign-item svg { width: 100%; max-width: 130px; aspect-ratio: 1; display: block; }
+        button.sign-item { cursor: pointer; }
+        button.sign-item.selected { border-color: #ffaa00; background: #fff3e0; }
+        button.sign-item.selected::after { content: '✔'; position: absolute; top: -12px; right: -12px; width: 38px; height: 38px; border-radius: 50%; background: #e67e22; color: #fff; font-size: 24px; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; }
+
+        #clock-canvas { width: min(400px, 78vw, 46vh); aspect-ratio: 1; touch-action: none; cursor: crosshair; border-radius: 50%; box-shadow: 0 5px 15px rgba(0,0,0,0.12); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+
+        .signal-stage { display: flex; align-items: stretch; justify-content: center; gap: 20px; width: 100%; max-width: 960px; }
+        .signal-light { background: #222; border-radius: 22px; padding: 14px; display: flex; flex-direction: column; justify-content: center; gap: 14px; flex: none; }
+        .lamp { width: clamp(92px, 15vw, 150px); aspect-ratio: 1; border-radius: 50%; background: #444; color: #333; display: flex; align-items: center; justify-content: center; font-size: clamp(50px, 8vw, 84px); }
+        .lamp.red.on { background: #e74c3c; color: #fff; box-shadow: 0 0 25px #e74c3c; }
+        .lamp.green.on { background: #2ecc71; color: #fff; box-shadow: 0 0 25px #2ecc71; }
+        .signal-scene { flex: 1; min-height: clamp(230px, 36vh, 340px); border-radius: 18px; overflow: hidden; position: relative; background: #666; border: 3px solid #ccc; }
+        .signal-scene .zebra { position: absolute; left: 0; right: 0; bottom: 0; height: 55%; background: repeating-linear-gradient(90deg, #fff 0 40px, #666 40px 80px); }
+        .walkers { position: absolute; bottom: 10%; left: 100%; font-size: clamp(76px, 13vw, 130px); white-space: nowrap; line-height: 1; }
+        .walkers.go { animation: walkAcross 2.2s linear forwards; }
+        @keyframes walkAcross { from { left: 100%; } to { left: -110%; } }
+        .signal-msg { position: absolute; top: 8px; left: 0; right: 0; text-align: center; font-family: 'Jua', sans-serif; font-size: clamp(20px, 3vw, 32px); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
+        .signal-msg.bad { color: #ffd0cc; }
+        .btn-cross { font-family: 'Jua', sans-serif; font-size: clamp(28px, 4vw, 40px); padding: 18px 70px; border-radius: 50px; border: none; background: #ffaa00; color: #fff; box-shadow: 0 6px 0 #d48806; cursor: pointer; touch-action: manipulation; }
+        .btn-cross:active { transform: translateY(6px); box-shadow: none; }
+
+        .match-area { position: relative; display: flex; flex-direction: column; gap: clamp(70px, 13vh, 130px); width: 100%; max-width: 900px; }
+        .match-col { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(8px, 2vw, 24px); position: relative; z-index: 2; }
+        .match-item { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; width: 100%; height: clamp(70px, 13vh, 110px); padding: 0 2px; border: 4px solid #ddd; border-radius: 18px; background: #fff; cursor: pointer; font-family: 'Jua', sans-serif; font-size: clamp(19px, 4.6vw, 44px); color: #333; display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+        .match-item.pic { height: clamp(90px, 18vh, 160px); font-size: clamp(50px, 10vw, 100px); }
+        .match-item.linked { border-color: #3498db; }
+        .match-item.selected { border-color: #ffaa00; background: #fff3e0; }
+        #match-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; overflow: visible; }
+        
+        .btn-option { 
+            background: white; border: 3px solid #eee; 
+            border-radius: 20px; 
+            padding: clamp(15px, 2vh, 22px);
+            font-size: clamp(20px, 2.5vw, 28px);
+            text-align: left; width: 100%; margin-bottom: 12px;
+            cursor: pointer; transition: 0.2s; display: flex; align-items: center; 
+            font-weight: 700; line-height: 1.3; color: #333; 
+        }
+        .btn-option:hover { background: #fff8e1; border-color: #ffaa00; transform: translateX(5px); }
+        .btn-option:active { background: #ffe0b2; transform: scale(0.99); }
+        .btn-option i { margin-right: 20px; color: #ffaa00; width: 40px; text-align: center; flex-shrink: 0; font-size: 1.2em; }
+
+        .btn-prev { 
+            position: absolute; top: 20px; left: 20px; 
+            background: #95a5a6; color: white; border: none; 
+            padding: 10px 25px; font-size: 20px; 
+            font-family: 'Jua', sans-serif; border-radius: 40px; cursor: pointer; 
+            box-shadow: 0 4px 0 #7f8c8d; transition: transform 0.1s; 
+            display: flex; align-items: center; gap: 8px; z-index: 100; 
+        }
+        .btn-prev:active { transform: translateY(4px); box-shadow: none; }
+        .admin-reset-btn { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background-color: #ecf0f1; color: #95a5a6; border: 2px solid #bdc3c7; font-size: 18px; cursor: pointer; transition: all 0.2s; z-index: 100; display: flex; justify-content: center; align-items: center; }
+        
+        /* 전체 화면 버튼 */
+        .btn-fullscreen {
+            position: fixed;
+            bottom: 20px; right: 20px;
+            width: 50px; height: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #333;
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 24px; cursor: pointer; z-index: 2000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s, background-color 0.2s; color: #333;
+        }
+        .btn-fullscreen:hover { transform: scale(1.1); background-color: #fff; }
+        .btn-fullscreen:active { transform: scale(0.95); }
+
+        /* 7. 탭 메뉴 & 리포트 */
+        .tab-menu { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; width: 100%; }
+        .tab-btn { 
+            padding: 12px 0; width: 32%; 
+            font-size: clamp(18px, 2.5vw, 24px);
+            font-family: 'Jua', sans-serif; border: none; background: #eee; border-radius: 15px; 
+            cursor: pointer; color: #7f8c8d; transition: 0.2s; font-weight: bold;
+        }
+        .tab-btn.active { background: #ffaa00; color: white; box-shadow: 0 4px 10px rgba(255, 170, 0, 0.3); transform: translateY(-3px); }
+        
+        .report-content { 
+            flex: 1; border: 4px solid #ffaa00; border-radius: 30px; padding: 25px; 
+            background: white; display: none; overflow-y: auto; 
+            width: 100%; scrollbar-width: thin; scrollbar-color: #ffaa00 #eee; 
+            font-size: 1.1em;
+        }
+        .report-content.show { display: block; animation: fadeIn 0.3s; }
+        
+        .score-box { background: #fff3cd; padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 25px; border: 3px dashed #ffecb3; }
+        .score-num { font-size: clamp(50px, 10vw, 80px); font-family: 'Jua', sans-serif; color: #d35400; line-height: 1; }
+        
+        /* 안전 카드 스타일 */
+        .safety-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 20px; margin-bottom: 40px; }
+        .safety-card { background: white; border: 3px solid #e0e0e0; border-radius: 25px; padding: 25px 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.03); position: relative; overflow: hidden; height: 100%; min-height: 240px; }
+        
+        .card-badge { 
+            position: absolute; top: 12px; left: 12px; 
+            font-size: 14px; 
+            font-weight: 800; padding: 6px 12px; border-radius: 30px; 
+        }
+        .card-badge.correction { background: #ffebee; color: #c0392b; border: 1px solid #ef9a9a; }
+        .card-badge.activity { background: #e8f8f5; color: #27ae60; border: 1px solid #a5d6a7; }
+        .card-badge.habit { background: #fff3e0; color: #e67e22; border: 1px solid #ffe0b2; }
+        
+        .safety-reason { 
+            margin-top: 12px; padding: 10px; background-color: #fff8e1; border-radius: 12px;
+            font-size: 15px; 
+            color: #d35400; font-weight: bold; width: 95%; text-align: center; line-height: 1.4;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+        }
+        .safety-reason strong { color: #e65100; font-size: 16px; }
+        .safety-card > i { font-size: 60px; margin: 15px 0 15px 0; }
+        
+        .safety-card p { font-size: 22px; font-weight: 800; margin: 0 0 8px 0; color: #333; line-height: 1.3; }
+        .safety-card .desc { font-size: 17px; color: #555; line-height: 1.5; margin-bottom: 5px; font-weight: 500; }
+
+        /* 데이터 분석 박스 */
+        .analysis-box { background-color: #f8f9fa; border-left: 8px solid #3498db; padding: 25px; border-radius: 0 20px 20px 0; margin-top: 20px; }
+        
+        /* 보고서 제목 스타일 통일 */
+        .analysis-title { 
+            font-size: 24px; 
+            font-weight: 800; 
+            color: #333; 
+            margin-bottom: 15px; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            font-family: 'Jua', sans-serif;
+        }
+        .analysis-text { 
+            font-size: 18px; 
+            color: #333; line-height: 1.6; 
+        }
+
+        /* Q7 레이아웃 */
+        .q7-layout { display: flex; flex-direction: row; gap: 30px; width: 100%; height: 100%; align-items: center; justify-content: center; }
+        .q7-left { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 2px dashed #ddd; padding-right: 15px; }
+        .q7-right { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        @media (max-width: 1024px) {
+            .q7-layout { flex-direction: column; gap: 15px; overflow-y: auto; padding-top: 30px; justify-content: flex-start; align-items: center; }
+            .q7-left { border-right: none; border-bottom: 2px dashed #ddd; padding-right: 0; padding-bottom: 15px; flex: none; width: 100%; }
+            .q7-right { flex: none; width: 100%; }
+        }
+
+        .date-display { background: #fff; border: 3px solid #ccc; border-radius: 15px; padding: 10px; width: 100%; max-width: 360px; font-size: clamp(30px, 6vw, 42px); font-weight: bold; text-align: center; margin: 0 auto 20px auto; color: #333; display: flex; justify-content: center; gap: 15px; height: 80px; align-items: center; }
+        .date-part { color: #d35400; border-bottom: 4px solid #d35400; padding: 0 5px; min-width: 70px; display: inline-block; text-align: center;}
+        
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 360px; margin: 0 auto; }
+        .num-btn { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; font-size: 28px; font-weight: bold; padding: 0; cursor: pointer; box-shadow: 0 4px 0 #ddd; transition: 0.1s; height: 60px; display: flex; align-items: center; justify-content: center; }
+        .num-btn:active { transform: translateY(4px); box-shadow: none; background: #eee; }
+        
+        .season-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; max-width: 360px; margin: 0 auto; }
+        .season-btn { background: white; border: 3px solid #eee; border-radius: 15px; font-size: 24px; font-weight: bold; padding: 15px; color: #555; cursor: pointer; transition: 0.2s; font-family: 'Jua', sans-serif; }
+        .season-btn.selected { background: #fff3e0; border-color: #ffaa00; color: #d35400; transform: scale(1.02); box-shadow: 0 4px 10px rgba(255, 170, 0, 0.2); }
+
+        /* 인지 차트 */
+        .chart-container { position: relative; width: 100%; max-width: 500px; height: 350px; margin: 0 auto 30px auto; display: flex; justify-content: center; align-items: center; }
+        canvas { max-width: 100%; max-height: 100%; }
+
+        /* 인지 카드 */
+        .cognitive-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .cognitive-card { background: #fff; border-radius: 20px; padding: 20px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .cognitive-card.danger { border-color: #ef9a9a; background-color: #fffbfb; }
+        .cognitive-card.warning { border-color: #ffe082; background-color: #fffdf5; }
+        .cognitive-card.good { border-color: #a5d6a7; background-color: #f1f8e9; }
+
+        .cognitive-icon { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 10px; color: white; }
+        .danger .cognitive-icon { background-color: #e57373; }
+        .warning .cognitive-icon { background-color: #ffb74d; }
+        .good .cognitive-icon { background-color: #81c784; }
+
+        .cognitive-title { font-size: 22px; font-weight: 800; margin-bottom: 5px; color: #333; }
+        .cognitive-score { font-size: 26px; font-weight: 900; margin-bottom: 10px; }
+        .danger .cognitive-score { color: #c62828; }
+        .warning .cognitive-score { color: #f57f17; }
+        .good .cognitive-score { color: #2e7d32; }
+        .cognitive-desc { font-size: 16px; color: #444; line-height: 1.4; background: rgba(255,255,255,0.7); padding: 10px; border-radius: 10px; width: 100%; font-weight: 500; }
+
+        /* 행동 분석 카드 */
+        .behavior-card { background: #fff; border: 2px solid #ddd; border-radius: 20px; padding: 20px; margin-bottom: 15px; display: flex; align-items: flex-start; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .behavior-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+        .behavior-content h4 { margin: 0 0 5px 0; font-size: 20px; color: #333; font-weight: 800; }
+        .behavior-content p { margin: 0; font-size: 16px; color: #555; line-height: 1.4; }
+        .risk-tag { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 800; margin-bottom: 5px; }
+        .risk-high { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+        .risk-low { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .risk-info { background: #f1f3f5; color: #555; border: 1px solid #ced4da; }
+
+        /* 경고 박스 */
+        .warning-box { background: linear-gradient(135deg, #fff5f5 0%, #ffebee 100%); border: 3px solid #ef5350; border-radius: 20px; padding: 25px 20px; margin-bottom: 30px; text-align: center; box-shadow: 0 8px 20px rgba(239, 83, 80, 0.2); animation: pulse-border 2s infinite; position: relative; overflow: hidden; }
+        @keyframes pulse-border { 0% { box-shadow: 0 0 0 0 rgba(239, 83, 80, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 83, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 83, 80, 0); } }
+        .warning-icon-wrapper { font-size: 40px; margin-bottom: 10px; display: inline-block; animation: fa-beat-fade 2s infinite; }
+        .date-compare { display: inline-block; margin: -8px 0 18px; padding: 6px 14px; border-radius: 999px; background: #fff; border: 1px solid #f3b6b4; color: #7a1513; font-size: 16px; }
+        .warning-box .warning-icon-wrapper i { color: #e74c3c; }
+        .warning-box.soft { background: linear-gradient(135deg, #fffaf0 0%, #fff3df 100%); border-color: #f0b24a; box-shadow: 0 8px 20px rgba(240, 178, 74, 0.2); animation: none; }
+        .warning-box.soft .warning-icon-wrapper i { color: #e09a1a; }
+        .warning-box.soft h3 { color: #8a5300 !important; } .warning-box.soft p { color: #6b4300 !important; }
+        .warning-box.soft .btn-warning-action { background-color: #d9822b; box-shadow: 0 4px 10px rgba(217, 130, 43, 0.4); }
+        .warning-box.mid { animation: none; }
+        .weak-list { list-style: none; margin: 0 auto 16px; padding: 0; max-width: 560px; text-align: left; display: grid; gap: 6px; }
+        .weak-list li { background: #fff; border-radius: 12px; padding: 9px 14px; font-size: 16px; color: #333; border: 1px solid rgba(0,0,0,0.08); }
+        .weak-list li span { color: #777; font-size: 14px; margin-left: 4px; }
+        .weak-list li em { display: block; font-style: normal; color: #c62828; font-weight: 700; font-size: 14px; margin-top: 2px; }
+        .warning-box.soft .weak-list li em { color: #9a5b00; }
+        .warning-note { font-size: 13px; color: #888; margin-top: 12px; }
+        .warning-box h3 { color: #c62828; font-size: 24px; margin: 0 0 10px 0; font-weight: 800; }
+        .warning-box p { color: #b71c1c; font-size: 18px; margin: 0 0 20px 0; line-height: 1.5; font-weight: 600; }
+        
+        .btn-warning-action { background-color: #c62828; color: white; border: none; padding: 15px 35px; font-size: 22px; border-radius: 50px; font-family: 'Jua', sans-serif; cursor: pointer; box-shadow: 0 4px 10px rgba(198, 40, 40, 0.4); transition: transform 0.2s, background-color 0.2s; display: inline-flex; align-items: center; gap: 10px; justify-content: center; }
+        .btn-warning-action:hover { transform: scale(1.05); background-color: #b71c1c; }
+        .btn-warning-action:active { transform: scale(0.95); }
+
+        /* 모달 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-overlay.open { display: flex; animation: fadeIn 0.3s; }
+
+        /* [NEW] 검사 장소(기관) 선택 */
+        .inst-bar { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 2.5vh; padding: 10px 18px; border-radius: 50px; background: #f5f7fa; border: 2px solid #e3e7ec; font-size: clamp(16px, 2vw, 20px); color: #555; }
+        .inst-bar b { color: #2c3e50; }
+        .inst-change { font-family: 'Jua', sans-serif; font-size: clamp(16px, 2vw, 20px); padding: 6px 16px; border-radius: 50px; border: 2px solid #ffaa00; background: #fff; color: #d35400; cursor: pointer; }
+        .inst-item { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 18px; margin-bottom: 10px; border: 3px solid #eee; border-radius: 16px; background: #fff; font-size: 21px; font-family: 'Jua', sans-serif; color: #333; cursor: pointer; text-align: left; }
+        .inst-item small { font-family: 'Noto Sans KR', sans-serif; font-size: 15px; color: #888; white-space: nowrap; }
+        .inst-item.current { border-color: #ffaa00; background: #fff3e0; }
+        .inst-custom { display: flex; gap: 8px; margin-top: 6px; }
+        .inst-custom input { flex: 1; min-width: 0; font-size: 20px; padding: 12px 14px; border: 3px solid #eee; border-radius: 14px; font-family: inherit; }
+        .inst-custom input:focus { outline: none; border-color: #ffaa00; }
+        .inst-custom button { font-family: 'Jua', sans-serif; font-size: 20px; padding: 0 20px; border: none; border-radius: 14px; background: #ffaa00; color: #fff; cursor: pointer; }
+        #inst-status { font-size: 17px; color: #666; margin: 0 0 14px; line-height: 1.5; }
+        /* 모달 박스 - 키보드 대응 */
+        .modal-box { 
+            background: white; 
+            width: 90%; 
+            max-width: 500px; 
+            padding: 30px; 
+            border-radius: 25px; 
+            text-align: center; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
+            position: relative; 
+            max-height: 90vh; 
+            overflow-y: auto; 
+        }
+        .modal-title { font-size: 26px; font-weight: bold; margin-bottom: 20px; color: #333; font-family: 'Jua', sans-serif; }
+        .privacy-box { background: #f8f9fa; border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin-bottom: 20px; text-align: left; height: 140px; overflow-y: auto; font-size: 15px; color: #555; line-height: 1.5; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #333; font-size: 18px; }
+        
+        /* [NEW] 전화번호 입력 및 확인 버튼 컨테이너 */
+        .phone-confirm-container { display: flex; gap: 8px; }
+        .btn-phone-confirm {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0 20px;
+            font-size: 18px;
+            font-family: 'Jua', sans-serif;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .btn-phone-confirm:active { background-color: #7f8c8d; transform: scale(0.95); }
+        
+        .input-group input { width: 100%; padding: 15px; border: 3px solid #ddd; border-radius: 12px; font-size: 20px; outline: none; transition: border-color 0.2s; }
+        .input-group input:focus { border-color: #3498db; }
+        .chk-group { text-align: left; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .chk-group input { width: 24px; height: 24px; cursor: pointer; accent-color: #3498db; }
+        .chk-group label { cursor: pointer; font-size: 18px; font-weight: bold; color: #333; }
+        .btn-submit { width: 100%; padding: 18px; background: #27ae60; color: white; border: none; border-radius: 15px; font-size: 24px; font-family: 'Jua', sans-serif; cursor: pointer; transition: background-color 0.2s; box-shadow: 0 5px 0 #1e8449; }
+        .btn-submit:hover { background-color: #2ecc71; }
+        .btn-submit:active { transform: translateY(4px); box-shadow: none; }
+        .btn-submit:disabled { background-color: #ccc; box-shadow: none; cursor: not-allowed; }
+        .btn-close-modal { position: absolute; top: 15px; right: 20px; font-size: 30px; cursor: pointer; color: #999; background: none; border: none; padding: 0; }
+        .btn-close-modal:hover { color: #333; }
+
+        /* 토스트 메시지 스타일 */
+        #toast-msg {
+            pointer-events: none;
+            visibility: hidden;
+            opacity: 0;
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 9999;
+            transition: opacity 0.5s, visibility 0.5s;
+            text-align: center;
+            white-space: nowrap;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            max-width: 90%;
+        }
+
+        #toast-msg.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="progress-container"><div class="progress-fill" id="progressBar"></div></div>
+    <!-- 토스트 메시지 -->
+    <div id="toast-msg"></div>
+
+    <!-- 전체화면 버튼 -->
+    <button class="btn-fullscreen" onclick="app.toggleFullScreen()">
+        <i class="fa-solid fa-expand"></i>
+    </button>
+
+    <!-- 모달 -->
+    <div id="consent-modal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="btn-close-modal" onclick="app.closeConsentModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-title"><i class="fa-solid fa-file-medical"></i> 상담 신청 및 데이터 전송</div>
+            <div class="input-group">
+                <label>휴대폰 번호</label>
+                <!-- [수정] 번호 입력란 + 확인 버튼 -->
+                <div class="phone-confirm-container">
+                    <input type="tel" id="user-phone" placeholder="010-0000-0000" maxlength="13" style="flex: 1;">
+                    <button class="btn-phone-confirm" onclick="app.hideKeyboard()">확인</button>
+                </div>
+            </div>
+            <div class="privacy-box">
+                <strong>[개인정보 수집 및 이용 동의]</strong><br>
+                1. 수집 목적: 치매안심센터 상담 연계 및 정밀 진단 예약<br>
+                2. 수집 항목: 휴대폰 번호, 진단 결과 데이터<br>
+                3. 보유 기간: 상담 종료 시까지 (최대 1년)<br>
+                ※ 동의 거부 시 상담 신청이 제한될 수 있습니다.
+            </div>
+            <div class="chk-group">
+                <input type="checkbox" id="privacy-agree" onchange="app.toggleSubmitBtn()">
+                <label for="privacy-agree">위 내용에 동의하며 전송합니다.</label>
+            </div>
+            <button id="btn-submit-data" class="btn-submit" onclick="app.submitUserData()" disabled>데이터 전송하기</button>
+        </div>
+    </div>
+
+    <!-- [NEW] 검사 장소(기관) 선택 -->
+    <div id="inst-modal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="btn-close-modal" onclick="InstPicker.close()" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-title"><i class="fa-solid fa-location-dot"></i> 검사 장소 선택</div>
+            <p id="inst-status">가까운 기관을 찾고 있습니다...</p>
+            <div id="inst-list"></div>
+            <div class="inst-custom">
+                <input type="text" id="inst-input" maxlength="40" placeholder="목록에 없으면 기관 이름 직접 입력" onkeydown="if(event.key==='Enter') InstPicker.useTyped()">
+                <button onclick="InstPicker.useTyped()">사용</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. 시작 -->
+    <div class="slide-container active" id="page-start">
+        <div class="center-box">
+            <div style="font-size: clamp(80px, 15vw, 150px); color: #ffaa00; margin-bottom: 4vh;"><i class="fa-solid fa-traffic-light"></i></div>
+            <h1>어르신 교통안전 <span class="highlight">및 인지능력 진단</span></h1>
+            <p>문제를 풀면 <strong>6대 인지 영역 분석</strong>과<br><strong>무의식적 행동 패턴</strong>을 분석해드립니다.</p>
+            <button class="btn-start btn-action" onclick="app.start()">시작하기</button>
+            <div class="inst-bar"><i class="fa-solid fa-location-dot" style="color:#e67e22;"></i> 검사 장소: <b id="inst-name">선택 안 됨</b> <button class="inst-change" onclick="InstPicker.open()">변경</button></div>
+            <p style="font-size: clamp(14px, 1.8vw, 17px); color: #888; margin-top: 2.5vh; font-weight: normal;">※ 검사 결과와 검사 장소(위치)는 이름 없이 저장되어 교육 개선에 활용됩니다.</p>
+        </div>
+    </div>
+
+    <!-- [NEW] 기억 과제: 표지판 3개 외우기 (마지막 Q16에서 다시 물어봄) -->
+    <div class="slide-container" id="page-memo">
+        <button class="btn-prev" onclick="app.goToSlide('start')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="task-box">
+            <h2>먼저, 표지판 <span style="color:#e74c3c;">3개</span>를 기억하세요</h2>
+            <p class="task-guide"><i class="fa-solid fa-lightbulb"></i> 마지막에 다시 물어봅니다. 잘 봐두세요!</p>
+            <div class="sign-grid" id="memo-grid"></div>
+            <button class="btn-start btn-action task-btn" onclick="app.goToSlide('q1')">기억했어요</button>
+        </div>
+    </div>
+
+    <!-- Q1 -->
+    <div class="slide-container" id="page-q1">
+        <button class="btn-prev" onclick="app.prev('q1')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="split-box">
+            <div class="text-area">
+                <h2>Q1. <span style="color:#27ae60;">초록불이 깜빡일 때</span><br>올바른 행동은 무엇인가요?</h2>
+                <button class="btn-option btn-action" onclick="app.answer(1, 0)"><i class="fa-solid fa-person-running"></i>① 얼른 뛰어서 건넌다</button>
+                <button class="btn-option btn-action" onclick="app.answer(1, 10)"><i class="fa-solid fa-hand"></i>② 멈추고 다음 신호를 기다린다</button>
+                <button class="btn-option btn-action" onclick="app.answer(1, 3)"><i class="fa-solid fa-person-walking"></i>③ 천천히 걸어서 건넌다</button>
+            </div>
+            <div class="media-group">
+                <p class="video-guide-text"><i class="fa-solid fa-circle-play"></i> 영상을 보고 문제를 풀어주세요</p>
+                <div class="media-wrapper"><iframe data-src="https://www.youtube.com/embed/fQqtMe2qCOo?autoplay=1&mute=1&enablejsapi=1&rel=0&playsinline=1" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="slide-container" id="page-q2">
+        <button class="btn-prev" onclick="app.prev('q2')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="center-box">
+            <h2 style="text-align: center; margin-bottom: 30px;">Q2. 평소에 담배를<br>얼마나 피우시나요?</h2>
+            <div style="width: 100%; max-width: 600px;">
+                <button class="btn-option btn-action" onclick="app.answer(2, 0)">① 흡연 안 함</button>
+                <button class="btn-option btn-action" onclick="app.answer(2, 1)">② 5개비 이하</button>
+                <button class="btn-option btn-action" onclick="app.answer(2, 2)">③ 10개비 이하</button>
+                <button class="btn-option btn-action" onclick="app.answer(2, 3)">④ 15개비 이하</button>
+                <button class="btn-option btn-action" onclick="app.answer(2, 4)">⑤ 1갑(20개비) 이상</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="slide-container" id="page-q3">
+        <button class="btn-prev" onclick="app.prev('q3')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="split-box">
+            <div class="media-group">
+                <p class="video-guide-text"><i class="fa-solid fa-circle-play"></i> 영상을 보고 문제를 풀어주세요</p>
+                <div class="media-wrapper"><iframe data-src="https://www.youtube.com/embed/SNFpQjgokSM?autoplay=1&mute=1&enablejsapi=1&rel=0&playsinline=1" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+            </div>
+            <div class="text-area">
+                <h2>Q3. <span style="color:#ff6b6b;">밤에 외출할 때</span><br>가장 안전한 옷차림은?</h2>
+                <button class="btn-option btn-action" onclick="app.answer(3, 0)"><i class="fa-solid fa-shirt" style="color:#333"></i>① 때가 안 타는 검은색 옷</button>
+                <button class="btn-option btn-action" onclick="app.answer(3, 5)"><i class="fa-solid fa-shirt" style="color:#999"></i>② 무난한 회색 옷</button>
+                <button class="btn-option btn-action" onclick="app.answer(3, 10)"><i class="fa-solid fa-vest-patches" style="color:#f39c12"></i>③ 눈에 잘 띄는 밝은/야광 옷</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="slide-container" id="page-q4">
+        <button class="btn-prev" onclick="app.prev('q4')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="split-box">
+            <div class="text-area">
+                <h2>Q4. 버스 하차 시 <span style="color:#27ae60;">가장 안전한</span><br>행동은 무엇인가요?</h2>
+                <button class="btn-option btn-action" onclick="app.answer(4, 10)"><i class="fa-solid fa-chair"></i>① 차가 멈춘 뒤 일어난다</button>
+                <button class="btn-option btn-action" onclick="app.answer(4, 0)"><i class="fa-solid fa-person-falling"></i>② 미리 문 앞으로 걸어 나간다</button>
+                <button class="btn-option btn-action" onclick="app.answer(4, 5)"><i class="fa-solid fa-hands-holding-circle"></i>③ 손잡이를 꼭 잡고 기다린다</button>
+            </div>
+            <div class="media-group">
+                <p class="video-guide-text"><i class="fa-solid fa-circle-play"></i> 영상을 보고 문제를 풀어주세요</p>
+                <div class="media-wrapper"><iframe data-src="https://www.youtube.com/embed/TQ0MmKOPVn8?autoplay=1&mute=1&enablejsapi=1&rel=0&playsinline=1" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="slide-container" id="page-q5">
+        <button class="btn-prev" onclick="app.prev('q5')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="split-box">
+            <div class="media-group">
+                <p class="video-guide-text"><i class="fa-solid fa-circle-play"></i> 영상을 보고 문제를 풀어주세요</p>
+                <div class="media-wrapper"><iframe data-src="https://www.youtube.com/embed/gg8lMb-WSpg?autoplay=1&mute=1&enablejsapi=1&rel=0&playsinline=1" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+            </div>
+            <div class="text-area">
+                <h2>Q5. 횡단보도가 없는 곳이라면<br>어떻게 건너야 할까요?</h2>
+                <button class="btn-option btn-action" onclick="app.answer(5, 0)"><i class="fa-solid fa-person-walking-arrow-right"></i>① 차가 없으면 빨리 건넌다</button>
+                <button class="btn-option btn-action" onclick="app.answer(5, 5)"><i class="fa-solid fa-hand"></i>② 손을 들고 조심히 건넌다</button>
+                <button class="btn-option btn-action" onclick="app.answer(5, 10)"><i class="fa-solid fa-map-location-dot"></i>③ 멀더라도 횡단보도를 찾는다</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="slide-container" id="page-q6">
+        <button class="btn-prev" onclick="app.prev('q6')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="split-box">
+            <div class="text-area">
+                <h2>Q6. 인도가 없는 골목길,<br>어디로 걸어야 안전할까요?</h2>
+                <button class="btn-option btn-action" onclick="app.answer(6, 0)"><i class="fa-solid fa-road"></i>① 길 한가운데로 걷는다</button>
+                <button class="btn-option btn-action" onclick="app.answer(6, 10)"><i class="fa-solid fa-car-side"></i>② 차와 마주 보고 가장자리로</button>
+                <button class="btn-option btn-action" onclick="app.answer(6, 5)"><i class="fa-solid fa-person-walking"></i>③ 차를 등지고 가장자리로</button>
+            </div>
+            <div class="media-group">
+                <p class="video-guide-text"><i class="fa-solid fa-circle-play"></i> 영상을 보고 문제를 풀어주세요</p>
+                <div class="media-wrapper"><iframe data-src="https://www.youtube.com/embed/64JQUbItWiY?autoplay=1&mute=1&enablejsapi=1&rel=0&playsinline=1" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="slide-container" id="page-q7">
+        <button class="btn-prev" onclick="app.prev('q7')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="q7-layout">
+            <div class="q7-left">
+                <h2 style="text-align: center; margin-bottom: 20px;">Q7. 오늘은 몇 월 며칠 인가요?</h2>
+                <div class="date-display">
+                    <span id="display-month" class="date-part"></span>월
+                    <span id="display-day" class="date-part"></span>일
+                </div>
+                <div class="numpad">
+                    <button class="num-btn btn-action" onclick="app.inputSmart(1)">1</button><button class="num-btn btn-action" onclick="app.inputSmart(2)">2</button><button class="num-btn btn-action" onclick="app.inputSmart(3)">3</button>
+                    <button class="num-btn btn-action" onclick="app.inputSmart(4)">4</button><button class="num-btn btn-action" onclick="app.inputSmart(5)">5</button><button class="num-btn btn-action" onclick="app.inputSmart(6)">6</button>
+                    <button class="num-btn btn-action" onclick="app.inputSmart(7)">7</button><button class="num-btn btn-action" onclick="app.inputSmart(8)">8</button><button class="num-btn btn-action" onclick="app.inputSmart(9)">9</button>
+                    <button class="num-btn btn-action" onclick="app.deleteSmart()"><i class="fa-solid fa-delete-left"></i></button><button class="num-btn btn-action" onclick="app.inputSmart(0)">0</button>
+                </div>
+            </div>
+            <div class="q7-right">
+                <h2 style="text-align: center; margin-bottom: 20px;">지금 계절은 무엇인가요?</h2>
+                <div class="season-grid">
+                    <button id="season-spring" class="season-btn btn-action" onclick="app.selectSeason('spring')">🌸 봄</button>
+                    <button id="season-summer" class="season-btn btn-action" onclick="app.selectSeason('summer')">☀️ 여름</button>
+                    <button id="season-autumn" class="season-btn btn-action" onclick="app.selectSeason('autumn')">🍁 가을</button>
+                    <button id="season-winter" class="season-btn btn-action" onclick="app.selectSeason('winter')">❄️ 겨울</button>
+                </div>
+                <button class="btn-start btn-action" style="margin-top: 30px; font-size: 32px; padding: 15px 50px;" onclick="app.submitDate()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="slide-container" id="page-q8">
+        <button class="btn-prev" onclick="app.prev('q8')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="split-box">
+            <div class="media-group">
+                <p class="video-guide-text"><i class="fa-solid fa-circle-play"></i> 영상을 보고 문제를 풀어주세요</p>
+                <div class="media-wrapper"><iframe data-src="https://www.youtube.com/embed/ZPMKuTK1pdQ?autoplay=1&mute=1&enablejsapi=1&rel=0&playsinline=1" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+            </div>
+            <div class="text-area">
+                <h2>Q8. 신호가 <span style="color:#e74c3c;">5초</span> 남았을 때<br>안전한 행동은?</h2>
+                <button class="btn-option btn-action" onclick="app.answer(8, 0)"><i class="fa-solid fa-person-running"></i>① 뛰어서 건넌다</button>
+                <button class="btn-option btn-action" onclick="app.answer(8, 10)"><i class="fa-solid fa-hand"></i>② 다음 신호를 기다린다</button>
+                <button class="btn-option btn-action" onclick="app.answer(8, 5)"><i class="fa-solid fa-person-walking"></i>③ 차가 안 오면 그냥 건넌다</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Q9 [수정] 외부 이미지 URL 사용 -->
+    <div class="slide-container" id="page-q9">
+        <button class="btn-prev" onclick="app.prev('q9')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="split-box">
+            <!-- 왼쪽: 표지판 이미지 영역 -->
+            <div class="media-group" style="justify-content: center; align-items: center;">
+                <div style="width: min(400px, 62vw); aspect-ratio: 1; display: flex; justify-content: center; align-items: center; margin: 0 auto;">
+                    <!-- 횡단보도 표지판: 저장소에 올린 회단보도표지판.jpg 사용 -->
+                    <img src="%ED%9A%8C%EB%8B%A8%EB%B3%B4%EB%8F%84%ED%91%9C%EC%A7%80%ED%8C%90.jpg" style="width: 100%; height: 100%; object-fit: contain;" alt="횡단보도 표지판">
+                </div>
+            </div>
+            <!-- 오른쪽: 문제 및 보기 -->
+            <div class="text-area">
+                <h2>Q9. 다음 표지판은 무엇을 의미하나요?</h2>
+                <div style="width: 100%; max-width: 600px;">
+                    <button class="btn-option btn-action" onclick="app.answer(9, 10)">① 그림과 같이 신호등이 없는 횡단보도가 있음</button>
+                    <button class="btn-option btn-action" onclick="app.answer(9, 0)">② 자전거 전용 도로</button>
+                    <button class="btn-option btn-action" onclick="app.answer(9, 0)">③ 도로 공사중</button>
+                    <button class="btn-option btn-action" onclick="app.answer(9, 0)">④ 미끄러운 도로</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Q10 -->
+    <div class="slide-container" id="page-q10">
+        <button class="btn-prev" onclick="app.prev('q10')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="center-box">
+            <i class="fa-solid fa-car-on" style="font-size: 80px; color: #f39c12; margin-bottom: 20px;"></i>
+            <h2 style="text-align: center;">Q10. 교차로 진입 직전(정지선 앞)에<br><span style="color:#f39c12;">황색 신호</span>가 켜졌습니다.<br>어떻게 해야 할까요?</h2>
+            <div style="width: 100%; max-width: 600px;">
+                <button class="btn-option btn-action" onclick="app.answer(10, 0)">① 속도를 높여 빠르게 통과한다</button>
+                <button class="btn-option btn-action" onclick="app.answer(10, 5)">② 천천히 서행하며 통과한다</button>
+                <button class="btn-option btn-action" onclick="app.answer(10, 10)">③ 정지선 앞에 멈춘다</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Q11 -->
+    <div class="slide-container" id="page-q11">
+        <button class="btn-prev" onclick="app.prev('q11')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="center-box">
+            <i class="fa-solid fa-arrow-turn-up fa-rotate-270" style="font-size: 80px; color: #27ae60; margin-bottom: 20px;"></i>
+            <h2 style="text-align: center;">Q11. '비보호 좌회전' 표지판이<br>있는 곳입니다. 언제 좌회전하나요?</h2>
+            <div style="width: 100%; max-width: 600px;">
+                <button class="btn-option btn-action" onclick="app.answer(11, 0)">① 빨간불일 때 눈치껏 한다</button>
+                <button class="btn-option btn-action" onclick="app.answer(11, 10)">② 녹색불(직진)일 때 반대편 차가 없으면</button>
+                <button class="btn-option btn-action" onclick="app.answer(11, 5)">③ 녹색 화살표 신호가 들어오면</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Q12 -->
+    <div class="slide-container" id="page-q12">
+        <button class="btn-prev" onclick="app.prev('q12')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="center-box">
+            <i class="fa-solid fa-child-reaching" style="font-size: 80px; color: #e67e22; margin-bottom: 20px;"></i>
+            <h2 style="text-align: center;">Q12. 어린이 보호구역(스쿨존)의<br>일반적인 제한 속도는?</h2>
+            <div style="width: 100%; max-width: 600px;">
+                <button class="btn-option btn-action" onclick="app.answer(12, 10)">① 시속 30km 이하</button>
+                <button class="btn-option btn-action" onclick="app.answer(12, 0)">② 시속 50km 이하</button>
+                <button class="btn-option btn-action" onclick="app.answer(12, 0)">③ 시속 60km 이하</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- [NEW] Q13 시공간: 시계 그리기 -->
+    <div class="slide-container" id="page-q13">
+        <button class="btn-prev" onclick="app.prev('q13')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="task-box">
+            <h2>Q13. 시계에 <span style="color:#e74c3c;">10시 10분</span>을 그려주세요</h2>
+            <p class="task-guide"><i class="fa-solid fa-hand-pointer"></i> 손가락으로 짧은 바늘과 긴 바늘을 그리세요</p>
+            <canvas id="clock-canvas" width="600" height="600"></canvas>
+            <div class="task-btn-row">
+                <button class="task-btn-sub" onclick="ClockTask.clear()"><i class="fa-solid fa-eraser"></i> 다시 그리기</button>
+                <button class="btn-start btn-action task-btn" onclick="ClockTask.submit()">다 그렸어요</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- [NEW] Q14 집행기능: 초록불일 때만 누르기 -->
+    <div class="slide-container" id="page-q14">
+        <button class="btn-prev" onclick="app.prev('q14')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="task-box">
+            <h2>Q14. <span style="color:#27ae60;">초록불</span>일 때만 건너요!</h2>
+            <p class="task-guide">초록불이 켜지면 <span style="color:#d35400;">[건너기]</span>를 누르고,<br>빨간불이면 누르지 말고 기다리세요.</p>
+            <div class="signal-stage">
+                <div class="signal-light">
+                    <span id="lamp-red" class="lamp red"><i class="fa-solid fa-person"></i></span>
+                    <span id="lamp-green" class="lamp green"><i class="fa-solid fa-person-walking"></i></span>
+                </div>
+                <div class="signal-scene">
+                    <div class="zebra"></div>
+                    <div class="walkers" id="signal-walkers">🚶‍♀️🚶‍♂️🚶‍♀️</div>
+                    <div class="signal-msg" id="signal-msg"></div>
+                </div>
+            </div>
+            <div class="task-guide" id="signal-count" style="color:#555;"></div>
+            <button id="signal-start" class="btn-start btn-action task-btn" onclick="SignalTask.begin()">시작</button>
+            <button id="signal-press" class="btn-cross" style="display:none;" onpointerdown="SignalTask.press()">건너기</button>
+        </div>
+    </div>
+
+    <!-- [NEW] Q15 언어: 그림과 낱말 선으로 잇기 -->
+    <div class="slide-container" id="page-q15">
+        <button class="btn-prev" onclick="app.prev('q15')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="task-box">
+            <h2>Q15. 그림과 이름을 선으로 이어주세요</h2>
+            <p class="task-guide"><i class="fa-solid fa-hand-pointer"></i> 그림에서 맞는 이름까지 손가락으로 선을 그어주세요</p>
+            <div class="match-area" id="match-area">
+                <svg id="match-lines"></svg>
+                <div class="match-col" id="match-pics"></div>
+                <div class="match-col" id="match-words"></div>
+            </div>
+            <div class="task-btn-row">
+                <button class="task-btn-sub" onclick="MatchTask.clear()"><i class="fa-solid fa-eraser"></i> 다시 그리기</button>
+                <button id="match-done" class="btn-start btn-action task-btn" onclick="MatchTask.submit()" disabled>다 이었어요</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- [NEW] Q16 기억력: 처음에 본 표지판 고르기 -->
+    <div class="slide-container" id="page-q16">
+        <button class="btn-prev" onclick="app.prev('q16')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="task-box">
+            <h2>Q16. 처음에 본 표지판 <span style="color:#e74c3c;">3개</span>를 골라주세요</h2>
+            <div class="sign-grid" id="recall-grid"></div>
+            <button id="recall-done" class="btn-start btn-action task-btn" onclick="RecallTask.submit()" disabled>다 골랐어요</button>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="slide-container" id="page-loading">
+        <div class="center-box">
+            <i class="fa-solid fa-gear fa-spin" style="font-size: 80px; color: #ffaa00; margin-bottom: 30px;"></i>
+            <h2>터치 반응 속도와<br>무의식적 행동 패턴을 분석 중입니다...</h2>
+        </div>
+    </div>
+
+    <!-- Result -->
+    <div class="slide-container" id="page-result">
+        <button class="admin-reset-btn" onclick="app.reset()"><i class="fa-solid fa-rotate-right"></i></button>
+        <div style="height: 100%; display: flex; flex-direction: column;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1>진단 결과 보고서</h1>
+            </div>
+            <div class="tab-menu">
+                <button class="tab-btn active" onclick="app.switchTab('safety')">🛡️ 안전 보고서</button>
+                <button class="tab-btn" onclick="app.switchTab('cognitive')">🧠 인지 보고서</button>
+                <button class="tab-btn" onclick="app.switchTab('behavior')">📊 행동 분석</button>
+            </div>
+
+            <!-- 안전 보고서 -->
+            <div id="report-safety" class="report-content show">
+                <!-- [수정] 정밀 안전 진단 제목 추가 -->
+                <div class="analysis-title" style="color: #2980b9; justify-content: center; margin-bottom: 10px;">
+                    <i class="fa-solid fa-user-shield"></i> 정밀 안전 진단
+                </div>
+                <p style="font-size: 18px; color: #555; text-align: center; margin-bottom: 25px; line-height: 1.6;">
+                    교통 안전 수칙 준수 여부를 종합적으로 평가합니다.
+                </p>
+
+                <div class="score-box">
+                    <span style="font-size: 24px; color:#555; font-weight:bold;">나의 교통안전 점수</span><br>
+                    <span class="score-num" id="safety-score">0점</span>
+                </div>
+                
+                <!-- [수정] 제목 통일 (나를 위한 안전 피드백) -->
+                <div class="analysis-title" style="color: #d35400; margin-top: 20px;">
+                    <i class="fa-solid fa-clipboard-check"></i> 나를 위한 안전 피드백
+                </div>
+                <div id="safety-visual-grid" class="safety-grid"></div>
+
+                <!-- 안전 추천 활동 -->
+                <div class="analysis-box" style="background-color: #f1f8e9; border-left: 8px solid #27ae60; margin-bottom: 30px;">
+                    <!-- [수정] 제목 통일 (안전을 위한 오늘의 실천) -->
+                    <div class="analysis-title" style="color: #2e7d32;">
+                        <i class="fa-solid fa-person-walking-luggage"></i> 안전을 위한 오늘의 실천
+                    </div>
+                    <div class="safety-grid" id="safety-recommend-grid" style="margin-top: 15px; margin-bottom: 0;"></div>
+                </div>
+
+                <div class="analysis-box">
+                    <!-- [수정] 제목 통일 (종합 데이터 분석) -->
+                    <div class="analysis-title" style="color: #2980b9;">
+                        <i class="fa-solid fa-chart-line"></i> 종합 데이터 분석
+                    </div>
+                    <div id="safety-analysis-text" class="analysis-text"></div>
+                </div>
+
+                <div id="cognitive-risk-box" class="analysis-box" style="background-color: #fff8e1; border-left: 8px solid #ffca28; margin-top: 20px; display: none;">
+                    <!-- [수정] 제목 통일 (인지 기능별 사고 위험 예측) -->
+                    <div class="analysis-title" style="color: #f57f17;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> 인지 기능별 사고 위험 예측
+                    </div>
+                    <div id="cognitive-risk-text" class="analysis-text" style="font-size: 19px;"></div>
+                </div>
+            </div>
+
+            <!-- 인지 보고서 -->
+            <div id="report-cognitive" class="report-content">
+                <!-- [수정] 인지 기능 정밀 분석 제목 스타일 통일 -->
+                <div class="analysis-title" style="color: #8e44ad; justify-content: center; margin-bottom: 10px;">
+                    <i class="fa-solid fa-brain"></i> 인지 건강 점검
+                </div>
+                <p style="font-size: 18px; color: #555; text-align: center; margin-bottom: 25px; line-height: 1.6;">
+                    날짜·계절, 기억력, 판단력, 흡연 습관 등 7가지를 살펴본 결과입니다.<br>
+                    <span style="font-size: 16px; color: #888;">※ 참고용 생활 점검이며 의학적 진단이 아닙니다.</span>
+                </p>
+
+                <div id="cognitive-warning"></div>
+                
+                <div class="score-box">
+                    <span style="font-size: 24px; color:#555; font-weight:bold;">나의 인지 건강 점수</span><br>
+                    <span class="score-num" id="cognitive-score">0점</span>
+                    <div id="cognitive-grade" style="font-size: 20px; margin-top: 10px; line-height: 1.5;"></div>
+                </div>
+
+                <div id="cognitive-sections"></div>
+                
+                <!-- [수정] 제목 통일 (인지 건강을 위한 추천 활동) -->
+                <div class="analysis-title" style="color: #27ae60; margin-top: 35px;">
+                    <i class="fa-solid fa-brain"></i> 인지 건강을 위한 추천 활동
+                </div>
+                <div id="cognitive-visual-grid" class="safety-grid"></div>
+            </div>
+
+            <!-- 행동 분석 보고서 -->
+            <div id="report-behavior" class="report-content">
+                <!-- [수정] 무의식 안전 위험 분석 제목 스타일 통일 -->
+                <div class="analysis-title" style="color: #c0392b; justify-content: center; margin-bottom: 10px;">
+                    <i class="fa-solid fa-video"></i> 무의식 안전 위험 분석
+                </div>
+                <p style="font-size: 18px; color: #555; text-align: center; margin-bottom: 25px; line-height: 1.6;">
+                    무의식적인 행동 패턴을 분석하여<br>실제 도로 위에서의 위험 요소를 예측합니다.
+                </p>
+                <div id="behavior-stats" style="display: flex; flex-direction: column; gap: 15px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BehaviorTracker = {
+            data: {
+                missedTaps: 0, reactionTimes: [], multiTaps: 0, 
+                longPresses: 0, visibilityHiddenCount: 0, videoInteractions: 0, startTime: 0,
+                fullscreenExits: 0 // [NEW] 전체화면 이탈(축소) 횟수
+            },
+            lastTapTime: 0,
+            pressTimer: null,
+            isPressing: false,
+            
+            init() {
+                // 롱프레스 감지
+                const startPress = (e) => {
+                    if (this.isPressing) return;
+                    if (e && e.target.closest && e.target.closest('canvas, .match-area')) return; // 그리기 문제는 제외
+                    this.isPressing = true;
+                    this.pressTimer = setTimeout(() => {
+                        this.data.longPresses++;
+                        this.isPressing = false;
+                    }, 1000); 
+                };
+                const endPress = () => {
+                    if (this.pressTimer) clearTimeout(this.pressTimer);
+                    this.isPressing = false;
+                };
+
+                // 빈 곳 터치 감지: 버튼·입력칸·영상 터치와 스크롤(손가락 이동)은 제외
+                const INTERACTIVE = 'button, input, label, a, canvas, .media-wrapper, #consent-modal';
+                let touch = null;
+                document.body.addEventListener('touchstart', (e) => {
+                    const t = e.touches[0];
+                    touch = { x: t.clientX, y: t.clientY, moved: false, miss: !e.target.closest(INTERACTIVE) };
+                }, { passive: true });
+                document.body.addEventListener('touchmove', (e) => {
+                    if (!touch || touch.moved) return;
+                    const t = e.touches[0];
+                    if (Math.abs(t.clientX - touch.x) > 10 || Math.abs(t.clientY - touch.y) > 10) {
+                        touch.moved = true;
+                        endPress(); // 스크롤은 길게 누름으로 세지 않음
+                    }
+                }, { passive: true });
+                document.body.addEventListener('touchend', () => {
+                    if (touch && touch.miss && !touch.moved) this.data.missedTaps++;
+                    touch = null;
+                });
+
+                // 다중 탭 감지 (날짜 숫자판은 빠르게 누르는 것이 정상이므로 제외)
+                document.body.addEventListener('click', (e) => {
+                    if (e.target.closest('.btn-action') && !e.target.closest('.num-btn')) {
+                        const now = performance.now();
+                        if (now - this.lastTapTime < 300) {
+                            this.data.multiTaps++;
+                        }
+                        this.lastTapTime = now;
+                    }
+                });
+
+                document.body.addEventListener('mousedown', startPress);
+                document.body.addEventListener('mouseup', endPress);
+                document.body.addEventListener('touchstart', startPress);
+                document.body.addEventListener('touchend', endPress);
+
+                // 이탈 감지 (탭 전환, 앱 최소화 등)
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) this.data.visibilityHiddenCount++;
+                });
+
+                // [NEW] 전체화면 상태 변경 감지 리스너
+                const onFsChange = () => {
+                     // 전체 화면 요소가 없으면(null) -> 전체 화면이 해제된 것
+                     const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+                     if (!isFs) {
+                         this.data.fullscreenExits++;
+                         console.log("Fullscreen exited. Count:", this.data.fullscreenExits);
+                     }
+                };
+                document.addEventListener('fullscreenchange', onFsChange);
+                document.addEventListener('webkitfullscreenchange', onFsChange);
+                document.addEventListener('msfullscreenchange', onFsChange);
+            },
+            reset() {
+                this.data = { missedTaps: 0, reactionTimes: [], multiTaps: 0, longPresses: 0, visibilityHiddenCount: 0, videoInteractions: 0, startTime: 0, fullscreenExits: 0 };
+            },
+            startTimer() { this.data.startTime = performance.now(); },
+            recordReaction() {
+                const endTime = performance.now();
+                const reactionTime = endTime - this.data.startTime; 
+                this.data.reactionTimes.push(reactionTime);
+                return reactionTime;
+            },
+            
+            // 전체 화면 버튼 기능
+            toggleFullScreen() {
+                try {
+                    if (!document.fullscreenElement) {
+                        const doc = document.documentElement;
+                        if (doc.requestFullscreen) {
+                             doc.requestFullscreen().catch((e) => {
+                                 console.log("Full screen denied:", e);
+                             });
+                        }
+                        else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
+                        else if (doc.msRequestFullscreen) doc.msRequestFullscreen();
+                    } else {
+                        if (document.exitFullscreen) document.exitFullscreen();
+                        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                        else if (document.msExitFullscreen) document.msExitFullscreen();
+                    }
+                } catch(e) {
+                    console.warn("Fullscreen request failed", e);
+                }
+            }
+        };
+
+        // [NEW] 유튜브 영상 소리 제어
+        // 영상은 음소거 상태로 자동 재생을 시작한 뒤(모든 기기에서 재생 보장), 곧바로 소리를 켭니다.
+        // 브라우저가 소리 자동 재생을 막는 기기에서는 큰 '소리 켜기' 버튼을 보여줍니다.
+        const VideoSound = {
+            ORIGIN: 'https://www.youtube.com',
+            iframe: null, button: null,
+            muted: true, state: -1, connected: false, settled: false,
+            listenTimer: null, checkTimer: null,
+
+            init() {
+                window.addEventListener('message', (e) => this.onMessage(e));
+            },
+
+            attach(iframe) {
+                this.detach();
+                this.iframe = iframe;
+                this.muted = true; this.state = -1; this.connected = false; this.settled = false;
+
+                const wrapper = iframe.closest('.media-wrapper');
+                let btn = wrapper.querySelector('.btn-sound-on');
+                if (!btn) {
+                    btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn-sound-on';
+                    btn.addEventListener('click', () => this.unmute(true));
+                    wrapper.appendChild(btn);
+                }
+                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> 소리 켜기';
+                this.button = btn;
+
+                // 플레이어가 준비될 때까지 연결 신호를 반복 전송
+                iframe.onload = () => {
+                    if (this.iframe !== iframe) return;
+                    clearInterval(this.listenTimer);
+                    this.listenTimer = setInterval(() => {
+                        if (this.connected) { clearInterval(this.listenTimer); return; }
+                        this.post({ event: 'listening', id: 1, channel: 'widget' });
+                    }, 250);
+                };
+            },
+
+            detach() {
+                clearInterval(this.listenTimer);
+                clearTimeout(this.checkTimer);
+                if (this.iframe) this.iframe.onload = null;
+                if (this.button) this.button.classList.remove('show');
+                this.iframe = null; this.button = null;
+            },
+
+            post(msg) {
+                try {
+                    if (this.iframe && this.iframe.contentWindow) {
+                        this.iframe.contentWindow.postMessage(JSON.stringify(msg), this.ORIGIN);
+                    }
+                } catch (e) { /* 플레이어가 아직 준비되지 않음 */ }
+            },
+
+            command(func, args) {
+                this.post({ event: 'command', func: func, args: args || [], id: 1, channel: 'widget' });
+            },
+
+            onMessage(e) {
+                if (e.origin !== this.ORIGIN || !this.iframe || e.source !== this.iframe.contentWindow) return;
+                let data;
+                try { data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (err) { return; }
+                if (!data) return;
+
+                const info = data.info;
+                if (info && typeof info === 'object') {
+                    if (typeof info.muted === 'boolean') this.muted = info.muted;
+                    if (typeof info.playerState === 'number') this.state = info.playerState;
+                }
+                if (!this.connected && (data.event === 'onReady' || data.event === 'initialDelivery' || data.event === 'infoDelivery')) {
+                    this.connected = true;
+                    this.unmute(false);
+                    return;
+                }
+                if (this.settled) this.refreshButton();
+            },
+
+            isPlayingWithSound() {
+                return !this.muted && (this.state === 1 || this.state === 3);
+            },
+
+            refreshButton() {
+                if (!this.button) return;
+                // 소리가 꺼진 채 재생 중일 때만 버튼 표시 (일시정지·재생 불가 상태는 제외)
+                this.button.classList.toggle('show', this.muted && (this.state === 1 || this.state === 3));
+            },
+
+            unmute(fromUser) {
+                if (!this.iframe) return;
+                const iframe = this.iframe;
+                this.settled = false;
+                if (this.button) this.button.classList.remove('show');
+                this.command('unMute');
+                this.command('setVolume', [100]);
+                this.command('playVideo');
+
+                clearTimeout(this.checkTimer);
+                let waited = 0;
+                const check = () => {
+                    if (this.iframe !== iframe) return;
+                    waited += 500;
+                    // 아직 로딩(버퍼링) 중이면 재생 여부가 확정될 때까지 조금 더 기다림 (최대 10초)
+                    if (this.state !== 1 && this.state !== 2 && waited < 10000) {
+                        this.checkTimer = setTimeout(check, 500);
+                        return;
+                    }
+                    this.settled = true;
+                    if (this.state === -1 || this.state === 5) { this.refreshButton(); return; } // 재생 자체가 시작되지 않음
+                    if (this.isPlayingWithSound()) { this.refreshButton(); return; }
+
+                    // 브라우저가 소리 재생을 막음 → 음소거로 계속 재생하고 버튼 안내
+                    this.command('mute');
+                    this.command('playVideo');
+                    this.muted = true;
+                    if (this.button) {
+                        this.button.innerHTML = fromUser
+                            ? '<i class="fa-solid fa-hand-pointer"></i> 영상 화면을 눌러 소리를 켜세요'
+                            : '<i class="fa-solid fa-volume-high"></i> 소리 켜기';
+                    }
+                    this.state = 1;
+                    this.refreshButton();
+                };
+                this.checkTimer = setTimeout(check, 1500);
+            }
+        };
+
+        // ===== [NEW] 인지 과제 =====
+        const SIGNS = {
+            stop: { name: '정지', svg: '<svg viewBox="0 0 100 100"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#d62d20"/><polygon points="32,9 68,9 91,32 91,68 68,91 32,91 9,68 9,32" fill="none" stroke="#fff" stroke-width="2.5"/><text x="50" y="62" text-anchor="middle" font-size="32" font-weight="900" fill="#fff" font-family="sans-serif">정지</text></svg>' },
+            noentry: { name: '진입금지', svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#d62d20"/><rect x="18" y="41" width="64" height="18" fill="#fff"/></svg>' },
+            straight: { name: '직진', svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#1a4fb4"/><polygon points="50,14 74,44 59,44 59,84 41,84 41,44 26,44" fill="#fff"/></svg>' },
+            noparking: { name: '주차금지', svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="41" fill="#1a4fb4" stroke="#d62d20" stroke-width="10"/><line x1="21" y1="21" x2="79" y2="79" stroke="#d62d20" stroke-width="10"/></svg>' },
+            slow: { name: '천천히', svg: '<svg viewBox="0 0 100 100"><polygon points="8,12 92,12 50,90" fill="#fff" stroke="#d62d20" stroke-width="9" stroke-linejoin="round"/><text x="50" y="40" text-anchor="middle" font-size="14" font-weight="900" fill="#111" font-family="sans-serif">천천히</text></svg>' },
+            speed50: { name: '최고속도 50', svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="41" fill="#fff" stroke="#d62d20" stroke-width="10"/><text x="50" y="65" text-anchor="middle" font-size="42" font-weight="900" fill="#111" font-family="sans-serif">50</text></svg>' }
+        };
+        const MEMO_TARGETS = ['stop', 'noentry', 'straight'];
+
+        const shuffled = (arr) => {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        };
+
+        // 기억 과제 1단계: 표지판 3개 보여주기
+        const MemoTask = {
+            enter() {
+                document.getElementById('memo-grid').innerHTML = MEMO_TARGETS.map(k =>
+                    `<div class="sign-item">${SIGNS[k].svg}<span>${SIGNS[k].name}</span></div>`).join('');
+            }
+        };
+
+        // 기억 과제 2단계 (Q16): 6개 중 처음에 본 3개 고르기
+        const RecallTask = {
+            picked: [],
+            enter() {
+                this.picked = [];
+                const grid = document.getElementById('recall-grid');
+                grid.innerHTML = shuffled(Object.keys(SIGNS)).map(k =>
+                    `<button type="button" class="sign-item" data-key="${k}">${SIGNS[k].svg}</button>`).join('');
+                grid.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => this.toggle(btn)));
+                document.getElementById('recall-done').disabled = true;
+            },
+            toggle(btn) {
+                const key = btn.dataset.key;
+                if (this.picked.includes(key)) {
+                    this.picked = this.picked.filter(k => k !== key);
+                    btn.classList.remove('selected');
+                } else {
+                    if (this.picked.length >= 3) { app.showToast('3개만 고를 수 있어요. 바꾸려면 고른 것을 다시 누르세요.'); return; }
+                    this.picked.push(key);
+                    btn.classList.add('selected');
+                }
+                document.getElementById('recall-done').disabled = this.picked.length !== 3;
+            },
+            submit() {
+                if (this.picked.length !== 3) return;
+                const hits = this.picked.filter(k => MEMO_TARGETS.includes(k)).length;
+                app.taskScores.memory = hits / 3;
+                app.finishTask(16);
+            }
+        };
+
+        // 시공간 과제 (Q13): 시계에 10시 10분 그리기
+        const ClockTask = {
+            strokes: [], current: null, bound: false,
+            enter() {
+                const canvas = document.getElementById('clock-canvas');
+                if (!this.bound) {
+                    this.bound = true;
+                    const pos = (pt) => {
+                        const r = canvas.getBoundingClientRect();
+                        if (!r.width || !r.height) return null;
+                        // 시계 중심이 (0,0), 테두리가 반지름 1 인 좌표
+                        return { x: ((pt.clientX - r.left) / r.width) * 2 - 1, y: ((pt.clientY - r.top) / r.height) * 2 - 1 };
+                    };
+                    const begin = (pt) => {
+                        const q = pos(pt); if (!q) return;
+                        this.current = [q];
+                        this.strokes.push(this.current);
+                        this.draw();
+                    };
+                    const move = (pt) => {
+                        if (!this.current) return;
+                        const q = pos(pt); if (!q) return;
+                        this.current.push(q);
+                        this.draw();
+                    };
+                    const end = () => { this.current = null; };
+
+                    // 터치: 화면이 대신 스크롤되거나 확대되지 않도록 기본 동작을 막고 직접 처리
+                    let touchId = null;
+                    const findTouch = (list) => { for (let i = 0; i < list.length; i++) if (list[i].identifier === touchId) return list[i]; return null; };
+                    canvas.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        if (touchId !== null) return; // 두 번째 손가락·손바닥은 무시
+                        const t = e.changedTouches[0];
+                        touchId = t.identifier;
+                        begin(t);
+                    }, { passive: false });
+                    canvas.addEventListener('touchmove', (e) => {
+                        e.preventDefault();
+                        const t = findTouch(e.changedTouches);
+                        if (t) move(t);
+                    }, { passive: false });
+                    const touchEnd = (e) => {
+                        if (touchId === null) return;
+                        if (findTouch(e.changedTouches) || e.touches.length === 0) { touchId = null; end(); }
+                    };
+                    canvas.addEventListener('touchend', touchEnd);
+                    canvas.addEventListener('touchcancel', touchEnd);
+                    this.resetInput = () => { touchId = null; this.current = null; };
+
+                    // 마우스 (PC)
+                    let mouseDown = false;
+                    canvas.addEventListener('mousedown', (e) => { if (e.button !== 0) return; e.preventDefault(); mouseDown = true; begin(e); });
+                    window.addEventListener('mousemove', (e) => { if (mouseDown) move(e); });
+                    window.addEventListener('mouseup', () => { if (mouseDown) { mouseDown = false; end(); } });
+                }
+                if (this.resetInput) this.resetInput();
+                this.strokes = []; this.current = null; this.warned = false;
+                this.draw();
+            },
+            clear() { this.strokes = []; if (this.resetInput) this.resetInput(); this.draw(); },
+            draw() {
+                const canvas = document.getElementById('clock-canvas');
+                const ctx = canvas.getContext('2d');
+                const W = canvas.width, C = W / 2, R = C - 8;
+                ctx.clearRect(0, 0, W, W);
+                ctx.beginPath(); ctx.arc(C, C, R, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff'; ctx.fill();
+                ctx.lineWidth = 10; ctx.strokeStyle = '#333'; ctx.stroke();
+                ctx.fillStyle = '#333'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.font = 'bold 54px "Noto Sans KR", sans-serif';
+                for (let n = 1; n <= 12; n++) {
+                    const a = (n * 30 - 90) * Math.PI / 180;
+                    ctx.fillText(String(n), C + R * 0.8 * Math.cos(a), C + R * 0.8 * Math.sin(a) + 3);
+                }
+                ctx.beginPath(); ctx.arc(C, C, 10, 0, Math.PI * 2); ctx.fill();
+
+                ctx.strokeStyle = '#1a4fb4'; ctx.lineWidth = 14; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                this.strokes.forEach(st => {
+                    ctx.beginPath();
+                    st.forEach((p, i) => {
+                        const x = C + p.x * C, y = C + p.y * C;
+                        if (i === 0) { ctx.moveTo(x, y); ctx.lineTo(x + 0.01, y); } else ctx.lineTo(x, y);
+                    });
+                    ctx.stroke();
+                });
+            },
+            // 그린 선에서 바늘(중심에서 뻗어 나간 방향과 길이)을 찾아냄
+            findHands() {
+                const maxR = new Array(36).fill(0), angAt = new Array(36).fill(0);
+                const mark = (x, y) => {
+                    const r = Math.hypot(x, y);
+                    if (r < 0.22) return;
+                    const ang = (Math.atan2(x, -y) * 180 / Math.PI + 360) % 360; // 12시 방향이 0도, 시계 방향
+                    const b = Math.floor(ang / 10) % 36;
+                    if (r > maxR[b]) { maxR[b] = r; angAt[b] = ang; }
+                };
+                this.strokes.forEach(st => {
+                    for (let i = 0; i < st.length; i++) {
+                        const a = st[i], b = st[Math.min(i + 1, st.length - 1)];
+                        const steps = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 0.02));
+                        for (let k = 0; k <= steps; k++) mark(a.x + (b.x - a.x) * k / steps, a.y + (b.y - a.y) * k / steps);
+                    }
+                });
+                const startBin = maxR.indexOf(0);
+                if (startBin === -1) return [{ ang: 0, len: 1, messy: true }]; // 온 방향에 다 그림
+                const hands = [];
+                let cur = null;
+                for (let k = 1; k <= 36; k++) {
+                    const b = (startBin + k) % 36;
+                    if (maxR[b] > 0) {
+                        if (!cur) { cur = { ang: angAt[b], len: maxR[b] }; hands.push(cur); }
+                        else if (maxR[b] > cur.len) { cur.ang = angAt[b]; cur.len = maxR[b]; }
+                    } else cur = null;
+                }
+                return hands.filter(h => h.len >= 0.3);
+            },
+            // 채점 (10점): 긴 바늘이 2를 가리킴 4, 짧은 바늘이 10을 가리킴 4, 바늘이 정확히 2개 1, 긴 바늘이 더 김 1
+            score() {
+                const hands = this.findHands();
+                if (hands.length === 0 || hands[0].messy) return 0;
+                const diff = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
+                const pts = (d) => d <= 20 ? 4 : (d <= 28 ? 2 : 0); // 20도 이내 만점, 28도 이내 절반
+                const nearest = (target, exclude) => hands.filter(h => h !== exclude).sort((a, b) => diff(a.ang, target) - diff(b.ang, target))[0];
+                const minute = nearest(60, null);            // 10분 = 숫자 2 방향
+                const hour = nearest(305, minute) || null;   // 10시 10분의 짧은 바늘 = 숫자 10 조금 지남
+                const mPts = pts(diff(minute.ang, 60));
+                const hPts = hour ? pts(diff(hour.ang, 305)) : 0;
+                let total = mPts + hPts;
+                // 바늘 하나가 10 쪽에만 있는 경우: 짧은 바늘 점수로 인정
+                if (!hour && mPts === 0) total = pts(diff(minute.ang, 305));
+                if (hands.length === 2) total += 1;
+                if (hour && mPts > 0 && hPts > 0 && minute.len > hour.len * 1.05) total += 1;
+                return Math.min(10, total);
+            },
+            submit() {
+                if (this.strokes.length === 0 && !this.warned) {
+                    this.warned = true;
+                    app.showToast('시계 위에 손가락으로 바늘을 그려주세요.');
+                    return;
+                }
+                app.taskScores.clock = this.score();
+                app.finishTask(13);
+            }
+        };
+
+        // 집행기능 과제 (Q14): 초록불에만 누르기
+        const SignalTask = {
+            TOTAL: 10, GREENS: 6, LIGHT_MS: 2200, GAP_MS: 1000,
+            timers: [], running: false, seq: [], trial: -1, lightOn: false, pressed: false, stats: null,
+            el(id) { return document.getElementById(id); },
+            later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+            stop() {
+                this.timers.forEach(clearTimeout);
+                this.timers = []; this.running = false; this.lightOn = false;
+            },
+            setLamp(color) {
+                this.el('lamp-red').classList.toggle('on', color === 'red');
+                this.el('lamp-green').classList.toggle('on', color === 'green');
+            },
+            say(text, bad) {
+                const m = this.el('signal-msg');
+                m.innerText = text; m.classList.toggle('bad', !!bad);
+            },
+            enter() {
+                this.stop();
+                this.setLamp(null); this.say('');
+                this.el('signal-walkers').classList.remove('go');
+                this.el('signal-count').innerText = '';
+                this.el('signal-start').style.display = '';
+                this.el('signal-press').style.display = 'none';
+            },
+            begin() {
+                this.stop();
+                const base = [];
+                for (let i = 0; i < this.TOTAL; i++) base.push(i < this.GREENS ? 'green' : 'red');
+                this.seq = shuffled(base);
+                this.stats = { correct: 0, commission: 0, omission: 0, presses: 0, extraPresses: 0 };
+                this.running = true;
+                this.el('signal-start').style.display = 'none';
+                this.el('signal-press').style.display = '';
+                this.say('준비하세요');
+                this.later(() => this.next(0), 1200);
+            },
+            next(i) {
+                if (i >= this.TOTAL) return this.finish();
+                this.trial = i; this.pressed = false; this.lightOn = true;
+                this.el('signal-walkers').classList.remove('go');
+                this.say('');
+                this.setLamp(this.seq[i]);
+                this.el('signal-count').innerText = `${i + 1} / ${this.TOTAL}`;
+                this.later(() => this.endTrial(), this.LIGHT_MS);
+            },
+            press() {
+                if (!this.running) return;
+                // 누른 횟수는 모두 기록. 같은 신호에 두 번 이상 누르거나 불이 꺼졌을 때 누르면 '불필요한 누름'
+                this.stats.presses++;
+                if (!this.lightOn || this.pressed) { this.stats.extraPresses++; return; }
+                this.pressed = true;
+                if (this.seq[this.trial] === 'green') {
+                    this.stats.correct++;
+                    this.el('signal-walkers').classList.add('go');
+                    this.say('잘하셨어요! 안전하게 건넙니다');
+                } else {
+                    this.stats.commission++;
+                    this.say('빨간불이에요! 기다려야 해요', true);
+                }
+            },
+            endTrial() {
+                this.lightOn = false;
+                this.setLamp(null);
+                if (!this.pressed) {
+                    if (this.seq[this.trial] === 'green') { this.stats.omission++; this.say('초록불을 놓쳤어요', true); }
+                    else { this.stats.correct++; this.say('잘 기다리셨어요'); }
+                }
+                this.later(() => this.next(this.trial + 1), this.GAP_MS);
+            },
+            finish() {
+                this.running = false;
+                this.el('signal-press').style.display = 'none';
+                this.say('끝났습니다. 수고하셨어요!');
+                app.taskScores.signal = this.stats.correct / this.TOTAL;
+                app.signalStats = this.stats;
+                this.later(() => app.finishTask(14), 1200);
+            }
+        };
+
+        // 언어 과제 (Q15): 그림과 이름을 선으로 잇기
+        const MatchTask = {
+            ITEMS: [
+                { key: 'bicycle', pic: '🚲', word: '자전거' },
+                { key: 'car', pic: '🚗', word: '자동차' },
+                { key: 'motorcycle', pic: '🏍️', word: '오토바이' },
+                { key: 'kickboard', pic: '🛴', word: '킥보드' }
+            ],
+            links: {}, selected: null, drag: null, bound: false,
+            enter() {
+                this.links = {}; this.selected = null; this.drag = null;
+                if (this.resetInput) this.resetInput();
+                const make = (side, list) => list.map(it =>
+                    `<button type="button" class="match-item ${side}" data-side="${side}" data-key="${it.key}">${side === 'pic' ? it.pic : it.word}</button>`).join('');
+                document.getElementById('match-pics').innerHTML = make('pic', shuffled(this.ITEMS));
+                document.getElementById('match-words').innerHTML = make('word', shuffled(this.ITEMS));
+                this.bind();
+                this.refresh();
+            },
+            clear() { this.links = {}; this.selected = null; this.drag = null; if (this.resetInput) this.resetInput(); this.refresh(); },
+            // 손가락(또는 마우스)으로 그림에서 이름까지 끌어서 선을 긋는 입력 처리
+            bind() {
+                if (this.bound) return;
+                this.bound = true;
+                const area = document.getElementById('match-area');
+                // 손을 뗀 위치에서 가장 가까운 칸 (칸 바깥으로 조금 벗어나도 인정)
+                const itemAt = (x, y, side) => {
+                    let best = null, bestD = Infinity;
+                    area.querySelectorAll('.match-item.' + side).forEach(btn => {
+                        const r = btn.getBoundingClientRect(), pad = 26;
+                        if (x < r.left - pad || x > r.right + pad || y < r.top - pad || y > r.bottom + pad) return;
+                        const d = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
+                        if (d < bestD) { bestD = d; best = btn; }
+                    });
+                    return best;
+                };
+                const begin = (pt, target) => {
+                    const btn = target && target.closest ? target.closest('.match-item') : null;
+                    if (!btn || !area.contains(btn)) return false;
+                    this.drag = { side: btn.dataset.side, key: btn.dataset.key, sx: pt.clientX, sy: pt.clientY, x: pt.clientX, y: pt.clientY, moved: false };
+                    this.refresh();
+                    return true;
+                };
+                const move = (pt) => {
+                    const d = this.drag; if (!d) return;
+                    d.x = pt.clientX; d.y = pt.clientY;
+                    if (Math.hypot(d.x - d.sx, d.y - d.sy) > 12) d.moved = true;
+                    this.refresh();
+                };
+                const end = () => {
+                    const d = this.drag; if (!d) return;
+                    this.drag = null;
+                    if (d.moved) {
+                        const hit = itemAt(d.x, d.y, d.side === 'pic' ? 'word' : 'pic');
+                        if (hit) this.link(d.side, d.key, hit.dataset.key);
+                        this.selected = null;
+                    } else {
+                        this.tap(d.side, d.key); // 끌지 않고 누르기만 한 경우: 그림 누르고 이름 누르기로도 이어짐
+                    }
+                    this.refresh();
+                };
+
+                let touchId = null;
+                const findTouch = (list) => { for (let i = 0; i < list.length; i++) if (list[i].identifier === touchId) return list[i]; return null; };
+                area.addEventListener('touchstart', (e) => {
+                    if (touchId !== null) { e.preventDefault(); return; }
+                    const t = e.changedTouches[0];
+                    if (begin(t, e.target)) { e.preventDefault(); touchId = t.identifier; }
+                }, { passive: false });
+                area.addEventListener('touchmove', (e) => {
+                    if (touchId === null) return;
+                    e.preventDefault();
+                    const t = findTouch(e.changedTouches);
+                    if (t) move(t);
+                }, { passive: false });
+                const touchEnd = (e) => {
+                    if (touchId === null) return;
+                    if (findTouch(e.changedTouches) || e.touches.length === 0) { touchId = null; end(); }
+                };
+                area.addEventListener('touchend', touchEnd);
+                area.addEventListener('touchcancel', touchEnd);
+
+                let mouseDown = false;
+                area.addEventListener('mousedown', (e) => { if (e.button === 0 && begin(e, e.target)) { e.preventDefault(); mouseDown = true; } });
+                window.addEventListener('mousemove', (e) => { if (mouseDown) move(e); });
+                window.addEventListener('mouseup', () => { if (mouseDown) { mouseDown = false; end(); } });
+                this.resetInput = () => { touchId = null; mouseDown = false; };
+            },
+            link(side, key, otherKey) {
+                const picKey = side === 'pic' ? key : otherKey;
+                const wordKey = side === 'word' ? key : otherKey;
+                // 이미 다른 그림과 이어진 이름이면 그 선은 지움
+                Object.keys(this.links).forEach(p => { if (this.links[p] === wordKey) delete this.links[p]; });
+                this.links[picKey] = wordKey;
+            },
+            tap(side, key) {
+                if (this.selected && this.selected.side !== side) {
+                    this.link(side, key, this.selected.key);
+                    this.selected = null;
+                } else if (this.selected && this.selected.key === key) {
+                    this.selected = null;
+                } else {
+                    this.selected = { side, key };
+                }
+            },
+            refresh() {
+                const area = document.getElementById('match-area');
+                if (!area) return;
+                const linkedWords = Object.values(this.links);
+                const active = this.drag || this.selected;
+                area.querySelectorAll('.match-item').forEach(btn => {
+                    const side = btn.dataset.side, key = btn.dataset.key;
+                    btn.classList.toggle('selected', !!active && active.side === side && active.key === key);
+                    btn.classList.toggle('linked', side === 'pic' ? key in this.links : linkedWords.includes(key));
+                });
+                const box = area.getBoundingClientRect();
+                const find = (side, key) => area.querySelector(`.match-item[data-side="${side}"][data-key="${key}"]`).getBoundingClientRect();
+                // 그림은 아래쪽 가운데, 이름은 위쪽 가운데가 선의 끝점
+                const anchor = (side, key) => { const r = find(side, key); return { x: r.left + r.width / 2 - box.left, y: (side === 'pic' ? r.bottom : r.top) - box.top }; };
+                let html = Object.keys(this.links).map(p => {
+                    const a = anchor('pic', p), b = anchor('word', this.links[p]);
+                    return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#3498db" stroke-width="7" stroke-linecap="round"/>`;
+                }).join('');
+                if (this.drag && this.drag.moved) {
+                    const a = anchor(this.drag.side, this.drag.key);
+                    html += `<line x1="${a.x}" y1="${a.y}" x2="${this.drag.x - box.left}" y2="${this.drag.y - box.top}" stroke="#ffaa00" stroke-width="7" stroke-linecap="round"/>`;
+                }
+                document.getElementById('match-lines').innerHTML = html;
+                document.getElementById('match-done').disabled = Object.keys(this.links).length !== this.ITEMS.length;
+            },
+            submit() {
+                if (Object.keys(this.links).length !== this.ITEMS.length) return;
+                const correct = Object.keys(this.links).filter(p => this.links[p] === p).length;
+                app.taskScores.match = correct / this.ITEMS.length;
+                app.finishTask(15);
+            }
+        };
+        window.addEventListener('resize', () => {
+            const page = document.getElementById('page-q15');
+            if (page && page.classList.contains('active')) MatchTask.refresh();
+        });
+
+        // ===== [NEW] 검사 장소(기관) 선택 =====
+        // 시트 '기관' 탭에 등록된 기관 중 이 기기에서 가장 가까운 3곳을 보여주고 고르게 함.
+        // 고른 이름은 이 기기에 기억되어 다음 검사에도 그대로 쓰이며, '변경'으로 바꿀 수 있음.
+        const InstPicker = {
+            KEY: 'silver-inst',
+            // 카카오맵 JavaScript 키 (카카오 개발자 사이트에 등록한 웹 주소에서만 동작)
+            KAKAO_JS_KEY: 'de4e56afa3092c1a0f3ef9f49fe86313',
+            // 주변에서 찾을 기관 종류
+            KAKAO_KEYWORDS: ['경로당', '노인복지관', '복지관', '행정복지센터', '치매안심센터'],
+            name: '',
+            pos: null,
+            places: null,   // 시트 '기관' 탭에 등록된 기관
+            kakao: [],      // 카카오맵에서 찾은 주변 기관
+            init() {
+                try { this.name = localStorage.getItem(this.KEY) || ''; } catch (e) { this.name = ''; }
+                this.show();
+                this.locate().then(() => Promise.all([this.loadPlaces(), this.searchKakao()])).then(() => {
+                    if (!this.name) this.open(); // 아직 고른 적이 없으면 처음 한 번 선택 창을 띄움
+                    else if (document.getElementById('inst-modal').classList.contains('open')) this.render();
+                });
+            },
+            show() {
+                document.getElementById('inst-name').innerText = this.name || '선택 안 됨';
+            },
+            locate() {
+                return new Promise(resolve => {
+                    if (!navigator.geolocation) return resolve();
+                    navigator.geolocation.getCurrentPosition(
+                        (p) => { this.pos = { lat: p.coords.latitude, lng: p.coords.longitude }; resolve(); },
+                        () => resolve(),
+                        { enableHighAccuracy: true, timeout: 15000, maximumAge: 600000 }
+                    );
+                });
+            },
+            loadPlaces() {
+                if (!app.googleScriptURL) { this.places = []; return Promise.resolve(); }
+                return fetch(app.googleScriptURL + '?action=places&t=' + Date.now())
+                    .then(r => r.json())
+                    .then(d => { this.places = (d && d.ok && Array.isArray(d.places)) ? d.places : []; })
+                    .catch(() => { this.places = []; });
+            },
+            // 카카오맵 장소 검색으로 주변 기관 찾기. 실패하면 조용히 넘어가고 시트 목록만 씀
+            loadKakaoSdk() {
+                if (window.kakao && window.kakao.maps && window.kakao.maps.services) return Promise.resolve(true);
+                if (this.sdkPromise) return this.sdkPromise;
+                this.sdkPromise = new Promise(resolve => {
+                    if (!this.KAKAO_JS_KEY) return resolve(false);
+                    const sc = document.createElement('script');
+                    sc.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=' + this.KAKAO_JS_KEY + '&libraries=services&autoload=false';
+                    const timer = setTimeout(() => resolve(false), 8000);
+                    sc.onload = () => {
+                        try { window.kakao.maps.load(() => { clearTimeout(timer); resolve(!!(window.kakao.maps.services)); }); }
+                        catch (e) { clearTimeout(timer); resolve(false); }
+                    };
+                    sc.onerror = () => { clearTimeout(timer); resolve(false); };
+                    document.head.appendChild(sc);
+                });
+                return this.sdkPromise;
+            },
+            searchKakao() {
+                if (!this.pos) return Promise.resolve();
+                return this.loadKakaoSdk().then(ok => {
+                    if (!ok) return;
+                    const svc = window.kakao.maps.services;
+                    const ps = new svc.Places();
+                    const center = new window.kakao.maps.LatLng(this.pos.lat, this.pos.lng);
+                    const one = (kw) => new Promise(res => {
+                        try {
+                            ps.keywordSearch(kw, (data, status) => res(status === svc.Status.OK ? data : []),
+                                { location: center, radius: 5000, sort: svc.SortBy.DISTANCE, size: 5 });
+                        } catch (e) { res([]); }
+                        setTimeout(() => res([]), 6000);
+                    });
+                    return Promise.all(this.KAKAO_KEYWORDS.map(one)).then(lists => {
+                        const seen = {};
+                        this.kakao = [].concat.apply([], lists)
+                            .filter(d => d && d.place_name && this.isRelevant(d) && !seen[d.place_name] && (seen[d.place_name] = true))
+                            .map(d => ({ name: d.place_name, lat: Number(d.y), lng: Number(d.x) }));
+                    });
+                }).catch(() => {});
+            },
+            // 이름에 '복지관'이 들어간 가게 등은 빼고, 어르신 관련 기관 종류만 남김
+            isRelevant(d) {
+                const cat = String(d.category_name || ''), name = String(d.place_name || '');
+                if (cat.indexOf('아동복지') !== -1) return false;
+                return cat.indexOf('노인정') !== -1 || cat.indexOf('노인복지시설') !== -1 || cat.indexOf('행정복지센터') !== -1
+                    || (cat.indexOf('사회복지시설') !== -1 && /복지관|경로당|센터/.test(name));
+            },
+            distance(a, b) {
+                const R = 6371000, rad = Math.PI / 180;
+                const dLat = (b.lat - a.lat) * rad, dLng = (b.lng - a.lng) * rad;
+                const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+                return 2 * R * Math.asin(Math.sqrt(h));
+            },
+            nearest() {
+                if (!this.pos) return [];
+                const seen = {};
+                return [].concat(this.places || [], this.kakao || [])
+                    .filter(p => p && p.name && isFinite(Number(p.lat)) && isFinite(Number(p.lng)) && String(p.lat) !== '' && String(p.lng) !== '')
+                    .map(p => ({ name: String(p.name).trim(), d: this.distance(this.pos, { lat: Number(p.lat), lng: Number(p.lng) }) }))
+                    .sort((a, b) => a.d - b.d)
+                    .filter(p => !seen[p.name] && (seen[p.name] = true)) // 시트와 카카오에 같은 이름이 있으면 한 번만
+                    .slice(0, 3);
+            },
+            render() {
+                const status = document.getElementById('inst-status');
+                const list = document.getElementById('inst-list');
+                const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                const near = this.nearest();
+                const fmtD = (d) => d < 1000 ? Math.round(d) + 'm' : (d / 1000).toFixed(1) + 'km';
+                if (this.places === null) status.innerText = '가까운 기관을 찾고 있습니다...';
+                else if (!this.pos) status.innerText = '위치를 확인할 수 없어 가까운 기관을 찾지 못했습니다. 아래에 기관 이름을 직접 입력해 주세요.';
+                else if (near.length === 0) status.innerText = '등록된 기관이 아직 없습니다. 기관 이름을 입력하면 다음부터 목록에 나옵니다.';
+                else status.innerText = '이 기기에서 가까운 기관입니다. 검사하는 곳을 골라주세요.';
+                list.innerHTML = near.map(p =>
+                    `<button type="button" class="inst-item${p.name === this.name ? ' current' : ''}" data-name="${esc(p.name)}">${esc(p.name)} <small>약 ${fmtD(p.d)}</small></button>`).join('');
+                list.querySelectorAll('.inst-item').forEach(b => b.addEventListener('click', () => this.choose(b.dataset.name)));
+                const input = document.getElementById('inst-input');
+                if (this.name && !near.some(p => p.name === this.name)) input.value = this.name;
+            },
+            open() {
+                document.getElementById('inst-modal').classList.add('open');
+                this.render();
+                if (this.places === null) Promise.all([this.loadPlaces(), this.searchKakao()]).then(() => this.render());
+            },
+            close() { document.getElementById('inst-modal').classList.remove('open'); },
+            choose(name) {
+                this.name = String(name || '').trim().slice(0, 40);
+                try { localStorage.setItem(this.KEY, this.name); } catch (e) {}
+                this.show();
+                this.close();
+                if (this.name) app.showToast('검사 장소: ' + this.name);
+            },
+            useTyped() {
+                const v = document.getElementById('inst-input').value.trim();
+                if (!v) { app.showToast('기관 이름을 입력해 주세요.'); return; }
+                this.choose(v);
+            }
+        };
+
+        const app = {
+            answers: { q1:0, q2:0, q3:0, q4:0, q5:0, q6:0, q7:0, q8:0, q9:0, q10:0, q11:0, q12:0 },
+            totalSlides: 16,
+            dateInput: { month: "", day: "" },
+            inputStep: 'month',
+            selectedSeason: "",
+            // 날짜·계절 문제(Q7) 채점 결과
+            orientation: { monthScore: 0, dayScore: 0, seasonScore: 0 },
+            // 문제마다 고른 보기 번호 (원래 순서 기준 1, 2, 3 ...)
+            choices: {},
+            lastOpt: '',
+            // 인지 과제 결과 (memory·signal·match 는 0~1 비율, clock 은 0~10점)
+            taskScores: { memory: 0, clock: 0, signal: 0, match: 0 },
+            signalStats: { correct: 0, commission: 0, omission: 0, presses: 0, extraPresses: 0 },
+            // 시트 저장용: 검사 한 번마다 새로 만드는 기록 번호, 검사 장소(위치), 자동 저장 여부
+            recordId: "",
+            location: "",
+            autoSaved: false,
+            // [NEW] 결과 데이터 저장용
+            reportData: null,
+            // [NEW] 구글 Apps Script Web App URL (여기에 복사한 URL을 넣으세요!)
+            googleScriptURL: "여기에-새-Apps-Script-주소", 
+
+            init() {
+                // 보기마다 원래 번호(①=1, ②=2 ...)를 붙여 둠. 보기 순서를 섞어도 어떤 보기를 골랐는지 알 수 있음
+                document.querySelectorAll('.slide-container').forEach(page => {
+                    page.querySelectorAll('.btn-option').forEach((b, i) => { b.dataset.opt = i + 1; });
+                });
+                document.addEventListener('click', (e) => {
+                    const b = e.target.closest ? e.target.closest('.btn-option') : null;
+                    if (b) this.lastOpt = Number(b.dataset.opt) || '';
+                }, true);
+                InstPicker.init();
+                BehaviorTracker.init();
+                VideoSound.init();
+                this.showToast("앱이 준비되었습니다.");
+            },
+            
+            // [수정] 전체 화면 토글 기능 추가 (HTML 버튼에서 호출)
+            toggleFullScreen() {
+                BehaviorTracker.toggleFullScreen();
+            },
+            
+            // [NEW] 키보드 숨기기 (확인 버튼용)
+            hideKeyboard() {
+                const input = document.getElementById('user-phone');
+                if(input) {
+                    input.blur(); // 포커스 해제 -> 키보드 내려감
+                }
+            },
+
+            showToast(msg) {
+                const toast = document.getElementById("toast-msg");
+                toast.innerText = msg;
+                toast.classList.add("show");
+                setTimeout(() => toast.classList.remove("show"), 3000);
+            },
+
+            start() {
+                // [수정] 시작 시 강제 전체 화면 코드 제거됨
+                // BehaviorTracker.toggleFullScreen(); <-- 삭제됨
+                
+                this.resetVariables();
+                this.recordId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+                this.autoSaved = false;
+                this.requestLocation();
+                this.shuffleOptions();
+                this.goToSlide('memo'); // 표지판 3개를 먼저 보여준 뒤 Q1 시작
+            },
+
+            // 검사 장소(기관) 구분용 위치. 브라우저가 위치 사용 허락을 한 번 묻습니다.
+            requestLocation() {
+                if (!navigator.geolocation) { this.location = "위치 확인 불가"; return; }
+                const runId = this.recordId;
+                this.location = "위치 확인 중";
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        if (this.recordId !== runId) return;
+                        const c = pos.coords;
+                        this.location = `${c.latitude.toFixed(5)}, ${c.longitude.toFixed(5)} (±${Math.round(c.accuracy)}m)`;
+                        // 결과가 이미 저장된 뒤에 위치가 잡혔다면 같은 줄을 다시 저장해 위치를 채움
+                        if (this.autoSaved) this.sendToSheet(this.buildSendData("")).catch(() => {});
+                    },
+                    (err) => {
+                        if (this.recordId !== runId) return;
+                        this.location = (err && err.code === 1) ? "위치 권한 거부" : "위치 확인 불가";
+                        if (this.autoSaved) this.sendToSheet(this.buildSendData("")).catch(() => {});
+                    },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 600000 }
+                );
+            },
+
+            resetVariables() {
+                this.answers = { q1:0, q2:0, q3:0, q4:0, q5:0, q6:0, q7:0, q8:0, q9:0, q10:0, q11:0, q12:0 };
+                this.dateInput = { month: "", day: "" };
+                this.inputStep = 'month';
+                this.selectedSeason = "";
+                this.orientation = { monthScore: 0, dayScore: 0, seasonScore: 0 };
+                this.choices = {};
+                this.lastOpt = '';
+                this.consultLevel = '';
+                this.weakDomains = '';
+                this.taskScores = { memory: 0, clock: 0, signal: 0, match: 0 };
+                this.signalStats = { correct: 0, commission: 0, omission: 0, presses: 0, extraPresses: 0 };
+                this.reportData = null; // 초기화
+                
+                ['spring', 'summer', 'autumn', 'winter'].forEach(s => {
+                    const btn = document.getElementById('season-' + s);
+                    if(btn) { btn.style.background = 'white'; btn.style.borderColor = '#eee'; btn.style.color = '#444'; btn.style.fontWeight = 'normal'; }
+                });
+
+                document.getElementById('display-month').innerText = "";
+                document.getElementById('display-day').innerText = "";
+                document.getElementById('cognitive-warning').innerHTML = "";
+                document.getElementById('cognitive-score').innerText = "0점";
+                document.getElementById('cognitive-grade').innerHTML = "";
+                document.getElementById('safety-visual-grid').innerHTML = "";
+                document.getElementById('cognitive-visual-grid').innerHTML = "";
+                document.getElementById('behavior-stats').innerHTML = "";
+                document.getElementById('cognitive-sections').innerHTML = "";
+                BehaviorTracker.reset();
+            },
+
+            inputSmart(num) {
+                const nStr = num.toString();
+                if (this.inputStep === 'month') {
+                    if (this.dateInput.month.length === 0) {
+                        if (num >= 2) {
+                            this.dateInput.month = "0" + nStr;
+                            this.inputStep = 'day';
+                        } else {
+                            this.dateInput.month = nStr;
+                        }
+                    } else if (this.dateInput.month.length === 1) {
+                        const temp = this.dateInput.month + nStr;
+                        const tempNum = parseInt(temp);
+                        if (tempNum > 12) {
+                            this.dateInput.month = "0" + this.dateInput.month; 
+                            this.inputStep = 'day';
+                            this.inputSmart(num); 
+                            return; 
+                        } else {
+                            this.dateInput.month = temp;
+                            this.inputStep = 'day';
+                        }
+                    }
+                } else {
+                    if (this.dateInput.day.length === 0) {
+                        if (num >= 4) {
+                            this.dateInput.day = "0" + nStr;
+                        } else {
+                            this.dateInput.day = nStr;
+                        }
+                    } else if (this.dateInput.day.length === 1) {
+                        const temp = this.dateInput.day + nStr;
+                        const tempNum = parseInt(temp);
+                        if (tempNum > 31) {
+                            this.dateInput.day = "0" + this.dateInput.day;
+                        } else {
+                            this.dateInput.day = temp;
+                        }
+                    }
+                }
+                this.updateDateDisplay();
+            },
+
+            deleteSmart() {
+                if (this.inputStep === 'day') {
+                    if (this.dateInput.day.length > 0) {
+                        this.dateInput.day = this.dateInput.day.slice(0, -1);
+                    } else {
+                        this.inputStep = 'month';
+                        this.dateInput.month = this.dateInput.month.slice(0, -1);
+                    }
+                } else {
+                    if (this.dateInput.month.length > 0) {
+                        this.dateInput.month = this.dateInput.month.slice(0, -1);
+                    }
+                }
+                this.updateDateDisplay();
+            },
+
+            updateDateDisplay() {
+                document.getElementById('display-month').innerText = this.dateInput.month;
+                document.getElementById('display-day').innerText = this.dateInput.day;
+            },
+
+            submitDate() {
+                const today = new Date();
+                const curM = today.getMonth() + 1;
+                const curD = today.getDate();
+                
+                const inputM = parseInt(this.dateInput.month || 0);
+                const inputD = parseInt(this.dateInput.day || 0);
+
+                // 날짜 (15점): 월 8점 + 일 7점
+                let monthScore = (inputM === curM) ? 8 : 0;
+                let dayScore = (inputD === curD) ? 7 : 0;
+
+                // 하루 차이는 월 8점 + 일 4점 (월말·월초, 연말·연초 포함)
+                if (inputM >= 1 && inputM <= 12 && inputD >= 1 && !(inputM === curM && inputD === curD)) {
+                    const typed = new Date(today.getFullYear(), inputM - 1, inputD);
+                    if (typed.getMonth() === inputM - 1) {
+                        const base = new Date(today.getFullYear(), today.getMonth(), curD);
+                        let diff = Math.round(Math.abs(typed - base) / 86400000);
+                        if (diff > 300) diff = Math.abs(diff - 365); // 12월 31일 ↔ 1월 1일
+                        if (diff <= 1) { monthScore = 8; dayScore = 4; }
+                    }
+                }
+
+                // 계절 (10점): 계절이 바뀌는 앞뒤 열흘은 양쪽 계절 모두 정답
+                const seasonOf = (m) => (m >= 3 && m <= 5) ? "spring" : (m >= 6 && m <= 8) ? "summer" : (m >= 9 && m <= 11) ? "autumn" : "winter";
+                const okSeasons = [seasonOf(curM)];
+                if (curD <= 10) okSeasons.push(seasonOf(curM === 1 ? 12 : curM - 1));
+                if (curD >= 21) okSeasons.push(seasonOf(curM === 12 ? 1 : curM + 1));
+                const seasonScore = okSeasons.includes(this.selectedSeason) ? 10 : 0;
+
+                this.orientation = { monthScore, dayScore, seasonScore };
+                this.answers['q7'] = monthScore + dayScore + seasonScore;
+                if (7 < this.totalSlides) this.goToSlide('q8');
+                else this.calcResult();
+            },
+
+            shuffleOptions() {
+                const quizPages = ['page-q1', 'page-q3', 'page-q4', 'page-q5', 'page-q6', 'page-q8', 'page-q10', 'page-q11', 'page-q12'];
+                quizPages.forEach(pageId => {
+                    const page = document.getElementById(pageId);
+                    if(!page) return;
+                    const container = page.querySelector('.text-area') || page.querySelector('.center-box > div[style*="max-width"]') || page.querySelector('.split-box > div:not(.media-group)');
+                    if(!container) return;
+                    const buttons = Array.from(container.querySelectorAll('.btn-option'));
+                    if(buttons.length === 0) return;
+                    for (let i = buttons.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [buttons[i], buttons[j]] = [buttons[j], buttons[i]];
+                    }
+                    buttons.forEach(btn => container.appendChild(btn));
+                });
+            },
+
+            goToSlide(id) {
+                VideoSound.detach();
+                SignalTask.stop();
+                document.querySelectorAll('.slide-container').forEach(el => {
+                    el.classList.remove('active');
+                    const iframe = el.querySelector('iframe');
+                    if (iframe) iframe.setAttribute('src', ''); 
+                });
+                const target = document.getElementById('page-' + id);
+                if (target) {
+                    target.classList.add('active');
+                    BehaviorTracker.startTimer();
+                    const tasks = { memo: MemoTask, q13: ClockTask, q14: SignalTask, q15: MatchTask, q16: RecallTask };
+                    if (tasks[id]) tasks[id].enter();
+                    const iframe = target.querySelector('iframe');
+                    if (iframe && iframe.dataset.src) {
+                        VideoSound.attach(iframe);
+                        iframe.setAttribute('src', iframe.dataset.src);
+                    }
+                }
+                let progress = 0;
+                if(id.startsWith('q')) {
+                    let num = parseInt(id.substring(1));
+                    progress = ((num - 1) / this.totalSlides) * 100;
+                } else if (id === 'result' || id === 'loading') progress = 100;
+                document.getElementById('progressBar').style.width = progress + '%';
+            },
+
+            prev(currentId) {
+                if(currentId === 'q1') this.goToSlide('memo');
+                else {
+                    const prevNum = parseInt(currentId.substring(1)) - 1;
+                    this.goToSlide('q' + prevNum);
+                }
+            },
+
+            // 인지 과제(Q13~Q16)를 마쳤을 때 다음으로 이동
+            finishTask(qNum) {
+                if (qNum < this.totalSlides) this.goToSlide('q' + (qNum + 1));
+                else {
+                    this.goToSlide('loading');
+                    setTimeout(() => this.calcResult(), 2000);
+                }
+            },
+
+            answer(qNum, score) {
+                // 반응 시간은 영상이 없는 문제(Q9~Q12)에서만 측정 (영상 시청 시간이 섞이지 않도록)
+                if (qNum >= 9 && qNum <= 12) BehaviorTracker.recordReaction();
+                this.answers['q' + qNum] = score;
+                this.choices['q' + qNum] = this.lastOpt || '';
+                this.lastOpt = '';
+                if (qNum < this.totalSlides) this.goToSlide('q' + (qNum + 1));
+                else {
+                    this.goToSlide('loading');
+                    setTimeout(() => this.calcResult(), 2000);
+                }
+            },
+
+            selectSeason(season) {
+                this.selectedSeason = season;
+                ['spring', 'summer', 'autumn', 'winter'].forEach(s => {
+                    const btn = document.getElementById('season-' + s);
+                    if(s === season) {
+                        btn.style.background = '#fff3e0';
+                        btn.style.borderColor = '#ffaa00';
+                        btn.style.color = '#d35400';
+                        btn.style.fontWeight = 'bold';
+                    } else {
+                        btn.style.background = 'white';
+                        btn.style.borderColor = '#eee';
+                        btn.style.color = '#444';
+                        btn.style.fontWeight = 'normal';
+                    }
+                });
+            },
+
+            calcResult() {
+                this.goToSlide('result');
+
+                // ===== 1. 안전 점수: 교통 문제 10개 × 10점 = 100점 =====
+                const safetyQ = ['q1','q3','q4','q5','q6','q8','q9','q10','q11','q12'];
+                let finalSafetyScore = 0;
+                safetyQ.forEach(q => finalSafetyScore += this.answers[q]);
+
+                // ===== 2. 행동 데이터 =====
+                const bd = BehaviorTracker.data;
+                const avgReaction = bd.reactionTimes.length > 0 ? bd.reactionTimes.reduce((a, b) => a + b) / bd.reactionTimes.length : 0;
+                const focusLoss = bd.visibilityHiddenCount + bd.fullscreenExits;
+                const SLOW_MS = 20000; // 글 문제를 읽고 답하는 데 평균 20초 초과
+                const FAST_MS = 800;
+
+                // ===== 3. 인지 건강 점수 (100점) =====
+                // 날짜·계절 25 + 기억력 20 + 집행기능 15 + 시공간 10 + 언어 10 + 흡연 10 + 집중 유지 10
+                const smokeLevel = this.answers.q2;
+                const o = this.orientation;
+                const t = this.taskScores;
+                const cognitive = {
+                    orientation: o.monthScore + o.dayScore + o.seasonScore,
+                    memory: Math.round(t.memory * 20),
+                    executive: Math.round(t.signal * 15),
+                    visuospatial: t.clock,
+                    language: Math.round(t.match * 10),
+                    smoking: Math.round(10 - smokeLevel * 2.5),
+                    focus: Math.max(0, 10 - focusLoss * 3 - (bd.multiTaps >= 4 ? 3 : 0))
+                };
+                const cognitiveScore = Object.values(cognitive).reduce((a, b) => a + b, 0);
+                const monthWrong = o.monthScore < 8;
+                const seasonWrong = o.seasonScore < 10;
+
+                // [NEW] 데이터 저장용 객체 생성
+                this.reportData = {
+                    safetyScore: finalSafetyScore,
+                    cognitiveScore: cognitiveScore,
+                    cognitive: cognitive,
+                    orientationParts: { date: o.monthScore + o.dayScore, season: o.seasonScore },
+                    behavior: {
+                        avgReaction: Math.round(avgReaction),
+                        missedTaps: bd.missedTaps,
+                        multiTaps: bd.multiTaps,
+                        longPresses: bd.longPresses,
+                        focusLoss: focusLoss,
+                        signalPresses: this.signalStats.presses,
+                        signalExtraPresses: this.signalStats.extraPresses,
+                        signalRedPresses: this.signalStats.commission
+                    }
+                };
+
+                // --- UI: 안전 보고서 ---
+                document.getElementById('safety-score').innerText = finalSafetyScore + "점 / 100점";
+
+                // 1) 종합 등급 및 분석
+                let finalMessage = "";
+                if(finalSafetyScore >= 90) finalMessage += "<div style='color:#27ae60; font-size:22px; font-weight:bold; margin-bottom:10px;'>🌟 종합 평가: 매우 안전</div>안전 지식이 풍부하고 대처 능력이 뛰어납니다. 지금처럼 안전 수칙을 잘 지켜주세요.<br>";
+                else if(finalSafetyScore >= 70) finalMessage += "<div style='color:#f39c12; font-size:22px; font-weight:bold; margin-bottom:10px;'>⚠️ 종합 평가: 보통</div>대체로 안전하지만, 몇 가지 주의가 필요합니다. 위의 오답 풀이를 꼭 확인하세요.<br>";
+                else finalMessage += "<div style='color:#c0392b; font-size:22px; font-weight:bold; margin-bottom:10px;'>🚨 종합 평가: 위험</div>교통 안전 사고 위험이 높습니다. 위의 오답 풀이를 하나씩 꼭 확인하세요.<br>";
+                
+                document.getElementById('safety-analysis-text').innerHTML = finalMessage;
+
+                // 2) 인지 건강과 보행 안전
+                let riskAnalysis = [];
+
+                if (monthWrong || seasonWrong) {
+                    riskAnalysis.push("• <strong>[날짜·계절 감각]</strong> 날짜나 계절이 헷갈리면 <u style='color:#c62828;'>해가 지는 시간이나 길이 어는 때를 놓치기 쉽습니다.</u> 외출 전에 달력과 날씨를 확인하세요.");
+                }
+                if (cognitive.focus < 8) {
+                    let reasons = [];
+                    if (focusLoss > 0) reasons.push(`검사 중 화면 이탈 ${focusLoss}회`);
+                    if (bd.multiTaps >= 4) reasons.push(`버튼 연타 ${bd.multiTaps}회`);
+                    riskAnalysis.push(`• <strong>[집중 유지]</strong> <span style='color:#d35400; font-size:0.9em;'>(${reasons.join(', ')})</span><br>주변 상황을 놓치기 쉽습니다. <u style='color:#c62828;'>길을 건널 때는 멈춰 서서 좌우를 끝까지 살핀 뒤</u> 건너세요.`);
+                }
+                if (this.signalStats.commission >= 2) {
+                    riskAnalysis.push(`• <strong>[신호 지키기]</strong> <span style='color:#d35400; font-size:0.9em;'>(빨간불에 ${this.signalStats.commission}회 누름)</span><br>마음이 급하면 신호를 놓치기 쉽습니다. <u style='color:#c62828;'>초록불을 눈으로 확인한 뒤에</u> 건너세요.`);
+                }
+                if (cognitive.visuospatial < 6) {
+                    riskAnalysis.push("• <strong>[거리·방향 감각]</strong> 다가오는 차가 실제보다 멀게 느껴질 수 있습니다. <u style='color:#c62828;'>차가 완전히 멈춘 것을 확인하고</u> 건너세요.");
+                }
+                if (smokeLevel > 0) {
+                    riskAnalysis.push("• <strong>[흡연 습관]</strong> 흡연은 뇌혈관 건강에 부담을 주어 인지 건강에 좋지 않습니다. <u style='color:#c62828;'>걸으면서 담배를 피우면 주변을 살피기 어려우니</u> 길에서는 삼가세요.");
+                }
+
+                const riskBox = document.getElementById('cognitive-risk-box');
+                const riskTitle = riskBox.querySelector('.analysis-title');
+                const riskText = document.getElementById('cognitive-risk-text');
+                riskBox.style.display = "block";
+                
+                if (riskAnalysis.length > 0) {
+                    riskBox.style.backgroundColor = "#fff8e1";
+                    riskBox.style.borderLeftColor = "#ffca28";
+                    riskTitle.innerHTML = "<i class='fa-solid fa-triangle-exclamation'></i> 인지 건강과 보행 안전";
+                    riskTitle.style.color = "#f57f17";
+                    riskText.innerHTML = "오늘 점검 결과, 길을 다니실 때 다음 사항을 참고해 주세요.<br><br>" + riskAnalysis.join("<br><br>");
+                } else {
+                    riskBox.style.backgroundColor = "#e8f5e9";
+                    riskBox.style.borderLeftColor = "#2e7d32";
+                    riskTitle.innerHTML = "<i class='fa-solid fa-shield-heart'></i> 인지 건강과 보행 안전";
+                    riskTitle.style.color = "#2e7d32";
+                    riskText.innerHTML = "<strong>✅ 인지 건강 점검 결과가 양호합니다.</strong><br>지금처럼 주변을 잘 살피며 안전하게 다니세요.";
+                }
+                
+                // 3) 오답 풀이
+                const sGrid = document.getElementById('safety-visual-grid');
+                let sHtml = "";
+                
+                if(this.answers.q1 < 10) sHtml += this.createCard('correction', 'fa-traffic-light', '#e74c3c', 'Q. 초록불이 깜빡이면?', '정답: 멈추고 다음 신호를 기다립니다.', '무리하게 진입하면 신호 위반 사고 위험이 큽니다.');
+                if(this.answers.q3 < 10) sHtml += this.createCard('correction', 'fa-shirt', '#333', 'Q. 밤에 안전한 옷은?', '정답: 밝은 색 옷을 입습니다.', '검은 옷은 운전자 눈에 안 보입니다.');
+                if(this.answers.q4 < 10) sHtml += this.createCard('correction', 'fa-bus', '#16a085', 'Q. 버스에서 내릴 때는?', '정답: 차가 완전히 멈춘 뒤 일어납니다.', '움직이는 버스 안에서 일어나면 넘어져 크게 다칠 수 있습니다.');
+                if(this.answers.q5 < 10) sHtml += this.createCard('correction', 'fa-hand', '#c0392b', 'Q. 무단횡단 해도 될까?', '정답: 꼭 횡단보도로 건너세요.', '조금 빠르려다 크게 다칠 수 있습니다.');
+                if(this.answers.q6 < 10) sHtml += this.createCard('correction', 'fa-person-walking-arrow-right', '#3498db', 'Q. 골목길 보행 방향은?', '정답: 차와 마주 보고 걷습니다.', '뒤에서 오는 차는 피할 수 없습니다.');
+                if(this.answers.q8 < 10) sHtml += this.createCard('correction', 'fa-person-walking', '#8e44ad', 'Q. 신호가 5초 남았을 때는?', '정답: 다음 신호를 기다립니다.', '시간이 모자란 신호에 서두르면 넘어지거나 차와 부딪힐 수 있습니다.');
+                if(this.answers.q9 < 10) sHtml += this.createCard('correction', 'fa-signs-post', '#0d6efd', 'Q. 파란 표지판의 뜻은?', '정답: 횡단보도가 있다는 표지입니다.', '이 표지판이 있는 곳에서 길을 건너야 안전합니다.');
+                if(this.answers.q10 < 10) sHtml += this.createCard('correction', 'fa-car', '#e67e22', 'Q. 교차로 앞 황색 신호?', '정답: 정지선 앞에 멈춥니다.', '가속하면 딜레마 존 사고 위험이 있습니다.');
+                if(this.answers.q11 < 10) sHtml += this.createCard('correction', 'fa-arrow-turn-up', '#27ae60', 'Q. 비보호 좌회전은 언제?', '정답: 녹색(직진) 신호일 때만!', '적색 신호 진입은 신호위반입니다.');
+                if(this.answers.q12 < 10) sHtml += this.createCard('correction', 'fa-child', '#f1c40f', 'Q. 스쿨존 제한 속도는?', '정답: 시속 30km 이하입니다.', '어린이는 언제 튀어나올지 모릅니다.');
+
+                if(sHtml === "") sHtml = this.createCard('activity', 'fa-thumbs-up', '#27ae60', '완벽해요', '틀린 문제가 하나도 없네요.<br>정말 훌륭합니다!', '');
+                sGrid.innerHTML = sHtml;
+
+                const rGrid = document.getElementById('safety-recommend-grid');
+                let rHtml = "";
+                rHtml += this.createCard('activity', 'fa-person-walking', '#3498db', '바른 자세 보행', '주머니에서 손을 빼고<br>전방을 주시하며 걷기', '');
+                rHtml += this.createCard('activity', 'fa-mobile-screen-button', '#9b59b6', '스마트폰 멈춤', '걸을 때는 휴대폰을<br>보지 않는 습관 기르기', '');
+                if (bd.missedTaps > 5) {
+                    rHtml += this.createCard('activity', 'fa-glasses', '#f1c40f', '시야 확보', '모자나 우산으로<br>시야를 가리지 않기', '');
+                }
+                rGrid.innerHTML = rHtml;
+
+                // --- UI: 인지 보고서 ---
+                document.getElementById('cognitive-score').innerText = cognitiveScore + "점 / 100점";
+                let gradeHtml = "";
+                if (cognitiveScore >= 80) gradeHtml = "<span style='color:#27ae60; font-weight:bold;'>🌟 양호</span><br>지금의 생활 습관을 잘 유지해 주세요.";
+                else if (cognitiveScore >= 60) gradeHtml = "<span style='color:#f39c12; font-weight:bold;'>⚠️ 주의</span><br>아래에서 점수가 낮은 항목을 확인해 보세요.";
+                else gradeHtml = "<span style='color:#c0392b; font-weight:bold;'>🔔 점검 권장</span><br>아래 항목을 확인하고 생활 습관을 점검해 보세요.";
+                document.getElementById('cognitive-grade').innerHTML = gradeHtml;
+
+                const order = ['orientation', 'memory', 'executive', 'visuospatial', 'language', 'smoking', 'focus'];
+                let cHtmlBody = `<div class="cognitive-grid">`;
+                order.forEach(key => cHtmlBody += this.createCognitiveCard(key, cognitive[key]));
+                cHtmlBody += `</div>`;
+                document.getElementById('cognitive-sections').innerHTML = cHtmlBody;
+
+                const cGrid = document.getElementById('cognitive-visual-grid');
+                let cSolHtml = "";
+                
+                if(smokeLevel > 0) {
+                    cSolHtml += this.createCard('habit', 'fa-ban-smoking', '#c0392b', '금연 실천', '담배 연기는 뇌혈관을<br>좁게 만듭니다.', '금연은 인지 건강을 지키는 좋은 습관입니다.');
+                }
+                if(cognitive.orientation < 25) cSolHtml += this.createCard('activity', 'fa-calendar-check', '#e67e22', '달력 보기', '매일 아침 달력을 보며<br>날짜와 계절을 확인하세요.', '');
+                if(cognitive.memory < 20) cSolHtml += this.createCard('activity', 'fa-note-sticky', '#f1c40f', '메모 습관', '중요한 것은 적어두고<br>자주 확인하세요.', '');
+                if(cognitive.executive < 12) cSolHtml += this.createCard('activity', 'fa-hand-paper', '#e74c3c', '3초 멈춤', '행동하기 전에<br>3초만 더 생각하세요.', '');
+                if(cognitive.visuospatial < 8) cSolHtml += this.createCard('activity', 'fa-map-location-dot', '#9b59b6', '길 익히기', '익숙한 길로 다니고<br>주변 건물을 눈여겨보세요.', '');
+                if(cognitive.language < 8) cSolHtml += this.createCard('activity', 'fa-comments', '#1abc9c', '대화하기', '가족, 친구들과 자주<br>이야기를 나누세요.', '');
+                if(cognitive.focus < 8) cSolHtml += this.createCard('activity', 'fa-eye', '#3498db', '집중력 기르기', '한 번에 하나씩 하는<br>습관을 가져보세요.', '');
+
+                if(cSolHtml === "") cSolHtml = this.createCard('activity', 'fa-brain', '#27ae60', '뇌 건강', '지금처럼 규칙적인<br>생활을 이어가세요!', '');
+                cGrid.innerHTML = cSolHtml;
+
+                // --- UI: 행동 분석 ---
+                const bStats = document.getElementById('behavior-stats');
+                let bHtml = "";
+                
+                if (focusLoss > 0) {
+                    bHtml += this.createBehaviorCard('fa-compress', '#9b59b6', '화면 이탈', `검사 중 화면을 ${focusLoss}회 벗어나거나 축소하셨습니다.<br><strong>[주의]</strong> 길을 건널 때는 한 가지에만 집중하세요.`, 'high');
+                }
+                if (this.signalStats.commission > 0) bHtml += this.createBehaviorCard('fa-traffic-light', '#e74c3c', '빨간불에 누름', `신호등 문제에서 빨간불에 ${this.signalStats.commission}회 누르셨습니다.<br><strong>[주의]</strong> 서두르지 말고 초록불을 확인한 뒤 건너세요.`, 'high');
+                if (this.signalStats.extraPresses >= 3) bHtml += this.createBehaviorCard('fa-hand-point-up', '#e67e22', '건너기 버튼을 계속 누름', `신호등 문제에서 [건너기]를 모두 ${this.signalStats.presses}회 누르셨고, 그중 ${this.signalStats.extraPresses}회는 필요 없는 누름이었습니다.<br><strong>[주의]</strong> 마음이 급할수록 한 번 누르고 기다리는 습관이 안전합니다.`, 'high');
+                if (this.signalStats.omission >= 2) bHtml += this.createBehaviorCard('fa-hourglass-half', '#f39c12', '초록불을 놓침', `신호등 문제에서 초록불을 ${this.signalStats.omission}회 놓치셨습니다.<br><strong>[주의]</strong> 초록불이 켜지자마자 건너기 시작해야 시간이 넉넉합니다.`, 'high');
+                if (bd.multiTaps >= 4) bHtml += this.createBehaviorCard('fa-bolt', '#e74c3c', '서두르는 습관 (연타)', `버튼을 연달아 ${bd.multiTaps}회 누르셨습니다.<br><strong>[주의]</strong> 신호가 바뀌기 전에 서둘러 건너려는 행동으로 이어질 수 있습니다.`, 'high');
+                if (avgReaction > SLOW_MS) bHtml += this.createBehaviorCard('fa-hourglass-end', '#f39c12', '답하는 데 걸린 시간', `문제당 평균 ${(avgReaction/1000).toFixed(0)}초가 걸렸습니다.<br><strong>[주의]</strong> 길을 건널 때는 신호가 넉넉히 남았을 때 출발하세요.`, 'high');
+                else if (avgReaction > 0 && avgReaction < FAST_MS) bHtml += this.createBehaviorCard('fa-person-running', '#e67e22', '성급한 판단', `문제를 매우 빠르게(${(avgReaction/1000).toFixed(1)}초) 답하셨습니다.<br><strong>[주의]</strong> 좌우를 살피지 않고 길을 건널 위험이 있습니다.`, 'high');
+                if (bd.missedTaps > 5) bHtml += this.createBehaviorCard('fa-bullseye', '#e74c3c', '터치 정확도', `버튼이 아닌 빈 공간을 ${bd.missedTaps}회 누르셨습니다.<br><strong>[주의]</strong> 시야가 좁아져 있거나 손끝 조절이 어려울 수 있습니다.`, 'high');
+                if (bd.longPresses > 0) bHtml += this.createBehaviorCard('fa-hand-pointer', '#7f8c8d', '길게 누르는 습관', `화면을 길게 누른 경우가 ${bd.longPresses}회 있었습니다.<br>버튼은 가볍게 톡 눌러도 됩니다.`, 'info');
+                
+                if(bHtml === "") bHtml = this.createBehaviorCard('fa-check-circle', '#27ae60', '안전한 행동 패턴', '집중 상태와 터치 정확도가<br>매우 안정적입니다.', 'low');
+                bStats.innerHTML = bHtml;
+
+                // ===== 상담 안내 =====
+                // 6개 영역을 각각 100점으로 환산해 60점 미만이면 '부족'으로 봄.
+                // 오늘의 월·계절을 틀리면 지남력은 점수와 상관없이 '부족'.
+                // 부족 1개 → 상담 권유 / 2개 → 상담 권장 / 3개 이상 → 상담을 꼭 권함
+                const DOMAIN_INFO = [
+                    ['orientation', '지남력', 25, '오늘 날짜와 계절을 아는 능력'],
+                    ['memory', '기억력', 20, '처음 본 표지판을 기억하는 능력'],
+                    ['executive', '집행기능', 15, '신호에 맞춰 누르고 참는 능력'],
+                    ['visuospatial', '시공간', 10, '시곗바늘 위치를 그리는 능력'],
+                    ['language', '언어', 10, '그림을 보고 이름을 아는 능력'],
+                    ['focus', '집중 유지', 10, '검사에 끝까지 집중하는 능력']
+                ];
+                const weak = DOMAIN_INFO.map(([key, name, max, desc]) => ({ key, name, desc, score: Math.round(cognitive[key] / max * 100) }))
+                    .filter(d => d.score < 60 || (d.key === 'orientation' && (monthWrong || seasonWrong)))
+                    .sort((a, b) => a.score - b.score);
+                let warningHTML = "";
+                if (weak.length) {
+                    let compare = '';
+                    if (monthWrong || seasonWrong) {
+                        // 기기에 설정된 오늘 날짜와 입력한 날짜를 함께 보여줌
+                        const now = new Date();
+                        const SEASON_KO = { spring: '봄', summer: '여름', autumn: '가을', winter: '겨울' };
+                        const typedM = parseInt(this.dateInput.month || 0), typedD = parseInt(this.dateInput.day || 0);
+                        const typed = (typedM ? typedM + '월 ' : '') + (typedD ? typedD + '일' : '') || '입력 안 함';
+                        compare = `<div class="date-compare">오늘: <b>${now.getMonth() + 1}월 ${now.getDate()}일</b> · 입력: <b>${typed}${this.selectedSeason ? ', ' + SEASON_KO[this.selectedSeason] : ''}</b></div>`;
+                    }
+                    const level = weak.length >= 3 ? 'strong' : (weak.length === 2 ? 'mid' : 'soft');
+                    const title = { strong: '🚨 상담을 꼭 받아보시길 권합니다', mid: '🔔 상담을 권해드립니다', soft: '💡 상담을 받아보시면 좋겠습니다' }[level];
+                    const names = weak.map(d => d.name).join(', ');
+                    const lead = {
+                        strong: `<strong>${weak.length}개 영역(${names})</strong>에서 점수가 낮게 나왔습니다.<br>여러 영역이 함께 낮을 때는 전문가의 확인이 꼭 필요합니다.`,
+                        mid: `<strong>${names}</strong> 영역이 부족하게 나왔습니다.<br>가까운 보건소 치매안심센터에서 무료 검진을 받아보시길 권합니다.`,
+                        soft: `<strong>${names}</strong> 영역이 조금 부족하게 나왔습니다.<br>걱정되시면 가까운 보건소 치매안심센터에서 무료 검진을 받아보세요.`
+                    }[level];
+                    const list = weak.map(d => {
+                        const extra = d.key === 'orientation' && (monthWrong || seasonWrong)
+                            ? `오늘의 ${[monthWrong ? '월' : '', seasonWrong ? '계절' : ''].filter(Boolean).join('과 ')}을 맞히지 못하셨습니다`
+                            : `${d.score}점 / 100점`;
+                        return `<li><b>${d.name}</b> <span>${d.desc}</span> <em>${extra}</em></li>`;
+                    }).join('');
+                    warningHTML = `
+                    <div class="warning-box ${level}">
+                        <div class="warning-icon-wrapper"><i class="fa-solid fa-bell"></i></div>
+                        <div class="warning-content">
+                            <h3>${title}</h3>
+                            <p>${lead}</p>
+                            <ul class="weak-list">${list}</ul>
+                            ${compare}
+                        </div>
+                        <button class="btn-warning-action" onclick="app.openConsentModal()"><i class="fa-solid fa-paper-plane"></i> 결과 전송 및 상담 신청</button>
+                        <div class="warning-note">※ 참고용 생활 점검이며 의학적 진단이 아닙니다.</div>
+                    </div>`;
+                }
+                this.consultLevel = weak.length >= 3 ? '꼭 권함' : (weak.length === 2 ? '권장' : (weak.length === 1 ? '권유' : ''));
+                this.weakDomains = weak.map(d => d.name).join(', ');
+
+                // (상담 안내 단계까지 정해진 뒤) 검사를 마치면 전화번호 없이 결과를 시트에 자동 저장
+                if (!this.autoSaved && this.googleScriptURL) {
+                    this.autoSaved = true;
+                    this.sendToSheet(this.buildSendData("")).catch(err => console.error("자동 저장 실패", err));
+                }
+                document.getElementById('cognitive-warning').innerHTML = warningHTML;
+            },
+
+            openConsentModal() { document.getElementById('consent-modal').classList.add('open'); },
+            closeConsentModal() { document.getElementById('consent-modal').classList.remove('open'); },
+            toggleSubmitBtn() {
+                const chk = document.getElementById('privacy-agree');
+                const btn = document.getElementById('btn-submit-data');
+                btn.disabled = !chk.checked;
+            },
+            
+            // [NEW] 데이터 전송 로직 수정 (Google Apps Script 연동)
+            // 시트로 보낼 한 줄 데이터
+            buildSendData(phone) {
+                const r = this.reportData;
+                return {
+                    recordId: this.recordId,   // 같은 검사의 재전송은 시트에서 같은 줄을 고쳐 씀
+                    location: this.location,   // 검사 장소 (위도, 경도)
+                    institution: InstPicker.name || '',   // 검사 장소로 고른 기관 이름
+                    consultLevel: this.consultLevel || '',  // 상담 안내 단계 (권유 / 권장 / 꼭 권함)
+                    weakDomains: this.weakDomains || '',    // 부족하게 나온 영역
+                    timestamp: new Date().toLocaleString(),
+                    isoTime: new Date().toISOString(),   // 기간별 통계용 (형식이 기기마다 달라지지 않는 시각)
+                    phone: phone,
+                    // 안전 점수
+                    safetyScore: r.safetyScore,
+                    // 인지 건강 점수 (합계 100)
+                    cognitiveScore: r.cognitiveScore,
+                    // 시트의 기존 열 제목(날짜 40·계절 20·흡연 20·집중 20)에 맞춰 환산해서 전송
+                    cog_date: Math.round(r.orientationParts.date / 15 * 40),
+                    cog_season: r.orientationParts.season * 2,
+                    cog_smoking: r.cognitive.smoking * 2,
+                    cog_focus: r.cognitive.focus * 2,
+                    // 6개 영역은 100점 환산
+                    cog_orientation: r.cognitive.orientation * 4,
+                    cog_memory: r.cognitive.memory * 5,
+                    cog_attention: r.cognitive.focus * 10,
+                    cog_visuospatial: r.cognitive.visuospatial * 10,
+                    cog_executive: Math.round(r.cognitive.executive / 15 * 100),
+                    cog_language: r.cognitive.language * 10,
+                    // 행동 패턴
+                    beh_avgReaction: r.behavior.avgReaction,
+                    beh_missedTaps: r.behavior.missedTaps,
+                    beh_multiTaps: r.behavior.multiTaps,
+                    beh_focusLoss: r.behavior.focusLoss,
+                    // 신호등 문제: [건너기]를 누른 전체 횟수 / 필요 없이 누른 횟수 / 빨간불에 누른 횟수
+                    beh_signalPresses: r.behavior.signalPresses,
+                    beh_signalExtra: r.behavior.signalExtraPresses,
+                    beh_signalRed: r.behavior.signalRedPresses,
+                    // 문항별 결과 (인사이트 분석용)
+                    // 교통 문제: 10 = 정답, 5 = 부분 정답, 0 = 오답
+                    q1: this.answers.q1, q3: this.answers.q3, q4: this.answers.q4, q5: this.answers.q5, q6: this.answers.q6,
+                    q8: this.answers.q8, q9: this.answers.q9, q10: this.answers.q10, q11: this.answers.q11, q12: this.answers.q12,
+                    q2_smoking: this.answers.q2,                              // 흡연 단계 0(비흡연)~4(한 갑 이상)
+                    q7_month: this.orientation.monthScore === 8 ? 1 : 0,       // 월 맞힘 1 / 틀림 0
+                    q7_day: this.orientation.dayScore === 7 ? 1 : (this.orientation.dayScore > 0 ? 0.5 : 0), // 일 맞힘 1 / 하루 차이 0.5 / 틀림 0
+                    q7_season: this.orientation.seasonScore === 10 ? 1 : 0,    // 계절 맞힘 1 / 틀림 0
+                    q13_clock: this.taskScores.clock,                          // 시계 그리기 0~10
+                    q14_signal: this.signalStats.correct,                      // 신호등 맞게 반응한 횟수 0~10
+                    q15_match: Math.round(this.taskScores.match * 4),          // 선 잇기 맞힌 개수 0~4
+                    q16_memory: Math.round(this.taskScores.memory * 3),        // 기억한 표지판 개수 0~3
+                    // 교통 문제에서 고른 보기 번호 (①=1, ②=2 ...)
+                    q1_choice: this.choices.q1 || '', q3_choice: this.choices.q3 || '', q4_choice: this.choices.q4 || '',
+                    q5_choice: this.choices.q5 || '', q6_choice: this.choices.q6 || '', q8_choice: this.choices.q8 || '',
+                    q9_choice: this.choices.q9 || '', q10_choice: this.choices.q10 || '', q11_choice: this.choices.q11 || '',
+                    q12_choice: this.choices.q12 || ''
+                };
+            },
+
+            // Google Apps Script 로 전송. 응답 내용은 읽지 않고 보내기만 함 (no-cors)
+            sendToSheet(data) {
+                return fetch(this.googleScriptURL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(data)
+                });
+            },
+
+            // 상담 신청: 자동 저장된 줄에 전화번호를 덧붙여 다시 전송
+            submitUserData() {
+                const phone = document.getElementById('user-phone').value;
+                if(phone.length < 10) { this.showToast('휴대폰 번호를 올바르게 입력해주세요.'); return; }
+
+                if (!this.googleScriptURL) {
+                    alert("데이터 저장을 위해 구글 스크립트 URL 설정이 필요합니다.\n(HTML 파일 내 googleScriptURL 변수를 확인하세요)");
+                    this.closeConsentModal();
+                    return;
+                }
+
+                this.showToast('데이터 전송 중...');
+                this.sendToSheet(this.buildSendData(phone))
+                .then(() => {
+                    this.closeConsentModal();
+                    this.showToast('✅ 데이터가 안전하게 전송되었습니다. (상담원이 곧 연락드립니다)');
+                })
+                .catch(err => {
+                    console.error(err);
+                    this.showToast('❌ 전송 실패: 인터넷 연결을 확인해주세요.');
+                });
+            },
+
+            createCognitiveCard(key, score) {
+                const info = {
+                    orientation: { name: '날짜·계절 (지남력)', icon: 'fa-calendar-day', max: 25, meaning: '오늘 날짜와 계절을 아는 능력',
+                        good: "날짜와 계절을 정확히 알고 계십니다.", mid: "날짜가 조금 헷갈리셨네요. 달력을 자주 보는 습관이 도움이 됩니다.", bad: "날짜나 계절 감각이 흐릿합니다. 매일 아침 달력을 확인하세요." },
+                    memory: { name: '기억력', icon: 'fa-brain', max: 20, meaning: '처음에 본 표지판을 기억하는 능력',
+                        good: "처음에 본 표지판을 모두 기억하셨습니다.", mid: "표지판 하나를 놓치셨네요. 중요한 것은 적어두면 좋습니다.", bad: "방금 본 것을 떠올리기 어려우셨네요. 메모하는 습관을 들여보세요." },
+                    executive: { name: '집행기능', icon: 'fa-traffic-light', max: 15, meaning: '신호에 맞게 누르고 참는 능력',
+                        good: "신호에 맞춰 정확하게 판단하셨습니다.", mid: "가끔 신호와 다르게 반응하셨습니다. 한 박자 쉬고 움직이세요.", bad: "신호에 맞춰 반응하기 어려우셨네요. 건너기 전에 신호를 꼭 다시 확인하세요." },
+                    visuospatial: { name: '시공간', icon: 'fa-clock', max: 10, meaning: '방향과 위치를 파악하는 능력 (시계 그리기)',
+                        good: "시곗바늘을 정확하게 그리셨습니다.", mid: "시곗바늘 위치가 조금 어긋났습니다.", bad: "시곗바늘을 그리기 어려우셨네요. 익숙한 길로 다니시는 것이 좋습니다." },
+                    language: { name: '언어기능', icon: 'fa-comments', max: 10, meaning: '그림을 보고 이름을 아는 능력',
+                        good: "그림과 이름을 모두 바르게 이으셨습니다.", mid: "이름 하나가 헷갈리셨네요.", bad: "이름이 잘 떠오르지 않으셨네요. 가족, 친구와 자주 대화하세요." },
+                    smoking: { name: '흡연 습관', icon: 'fa-smoking', max: 10, meaning: '흡연은 인지 저하의 위험 요인입니다',
+                        good: "비흡연은 뇌 건강을 지키는 좋은 습관입니다.", mid: "조금만 더 줄여 금연에 도전해 보세요.", bad: "흡연량이 많습니다. 하루 한 개비씩 줄여 보세요." },
+                    focus: { name: '집중 유지', icon: 'fa-eye', max: 10, meaning: '한 가지 일에 끝까지 집중하는 능력',
+                        good: "끝까지 집중해서 잘 마치셨습니다.", mid: "가끔 주의가 흐트러졌습니다. 한 번에 하나씩 해 보세요.", bad: "집중을 이어가기 어려우셨네요. 길에서는 걷는 데만 집중하세요." }
+                };
+                const d = info[key];
+                const ratio = score / d.max;
+                const status = ratio >= 0.8 ? 'good' : (ratio >= 0.6 ? 'warning' : 'danger');
+                const advice = status === 'good' ? d.good : (status === 'warning' ? d.mid : d.bad);
+                return `<div class="cognitive-card ${status}"><div class="cognitive-icon"><i class="fa-solid ${d.icon}"></i></div><div class="cognitive-title">${d.name}</div><div style="font-size: 16px; color: #7f8c8d; margin-bottom: 10px; font-weight: normal;">${d.meaning}</div><div class="cognitive-score">${score}점 / ${d.max}점</div><div class="cognitive-desc">${advice}</div></div>`;
+            },
+
+            createCard(type, icon, color, title, desc, reason) {
+                let badgeClass = 'activity';
+                let badgeText = '추천';
+                let descStyle = '';
+
+                if (type === 'correction') {
+                    badgeClass = 'correction';
+                    badgeText = '오답 풀이';
+                    descStyle = 'color:#27ae60; font-weight:bold;'; 
+                } else if (type === 'habit') {
+                    badgeClass = 'habit';
+                    badgeText = '생활 습관';
+                }
+
+                let reasonHtml = '';
+                if (reason) {
+                    if (type === 'correction') {
+                        reasonHtml = `<div class="safety-reason"><i class="fa-solid fa-circle-exclamation"></i> ${reason}</div>`;
+                    } else {
+                        reasonHtml = `<div class="safety-reason" style="background:none; color:#666; font-weight:normal; border:none; padding:5px;">${reason}</div>`;
+                    }
+                }
+
+                return `<div class="safety-card"><span class="card-badge ${badgeClass}">${badgeText}</span><i class="fa-solid ${icon}" style="color:${color};"></i><p>${title}</p><div class="desc" style="${descStyle}">${desc}</div>${reasonHtml}</div>`;
+            },
+
+            createBehaviorCard(icon, color, title, desc, riskLevel) {
+                const riskClass = riskLevel === 'high' ? 'risk-high' : (riskLevel === 'info' ? 'risk-info' : 'risk-low');
+                const riskText = riskLevel === 'high' ? '주의 신호' : (riskLevel === 'info' ? '참고' : '안전 신호');
+                return `<div class="behavior-card"><div class="behavior-icon" style="background-color:${color}20; color:${color};"><i class="fa-solid ${icon}"></i></div><div class="behavior-content"><span class="risk-tag ${riskClass}">${riskText}</span><h4>${title}</h4><p>${desc}</p></div></div>`;
+            },
+
+            switchTab(tab) {
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                if(event && event.target) event.target.classList.add('active');
+                document.querySelectorAll('.report-content').forEach(c => c.classList.remove('show'));
+                document.getElementById('report-' + tab).classList.add('show');
+            },
+
+            reset() {
+                this.resetVariables();
+                this.switchTab('safety');
+                this.goToSlide('start');
+            }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
