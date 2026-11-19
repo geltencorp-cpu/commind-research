@@ -1,0 +1,4 @@
+features*.csv
+*.json
+!package.json
+__pycache__/
