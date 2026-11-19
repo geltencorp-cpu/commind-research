@@ -87,6 +87,8 @@ const ResearchLog = (() => {
         if (t - lastMotion < MOTION_MS) return;
         lastMotion = t;
         const a = e.accelerationIncludingGravity || {}, rr = e.rotationRate || {};
+        // 센서가 없는 기기(PC 등)는 값이 모두 비어 있는 이벤트를 한 번 보냄 → 기록하지 않음
+        if (a.x == null && a.y == null && a.z == null && rr.alpha == null && rr.beta == null && rr.gamma == null) return;
         s.motion.push([rel(t), r2(a.x), r2(a.y), r2(a.z), r1(rr.alpha), r1(rr.beta), r1(rr.gamma)]);
         s.motionSeen = true;
     }
@@ -94,6 +96,7 @@ const ResearchLog = (() => {
         if (!s) return;
         const t = now();
         if (t - lastOrient < ORIENT_MS) return;
+        if (e.alpha == null && e.beta == null && e.gamma == null) return;
         lastOrient = t;
         s.orientation.push([rel(t), r1(e.alpha), r1(e.beta), r1(e.gamma)]);
         s.orientSeen = true;

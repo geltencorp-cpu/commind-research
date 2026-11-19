@@ -170,7 +170,9 @@ function saveRaw(ss, data) {
   while (old.hasNext()) old.next().setTrashed(true);
   var file = folder.createFile(name, text, 'application/json');
   var c = (data.raw && data.raw.counts) || {};
-  getRawSheet(ss).appendRow([data.recordId, data.participantCode || '', new Date(), name, file.getUrl(),
+  var rawSheet = getRawSheet(ss);
+  rawSheet.getRange(1, 2, rawSheet.getMaxRows(), 1).setNumberFormat('@');
+  rawSheet.appendRow([data.recordId, String(data.participantCode || ''), new Date(), name, file.getUrl(),
     Math.round(text.length / 1024), c.touch || 0, c.motion || 0, c.events || 0]);
 }
 
@@ -204,6 +206,8 @@ function doPost(e) {
 
     // 전화번호 열은 글자 형식으로 두어 맨 앞 0이 사라지지 않게 함
     sheet.getRange(1, keyIndex('phone') + 1, sheet.getMaxRows(), 1).setNumberFormat('@');
+    // [연구] 참여 번호도 글자 형식 (001 이 1 로 바뀌면 코그메이트 결과와 이을 수 없음)
+    sheet.getRange(1, keyIndex('participantCode') + 1, sheet.getMaxRows(), 1).setNumberFormat('@');
 
     var row = COLUMNS.map(function (c) {
       var value = data[c[1]];
