@@ -93,6 +93,13 @@ var COLUMNS = [
   ['신호등 빨강 누름 평균(ms)', 'sig_nogoRtMean'],
   ['신호등 놓침', 'sig_omission'],
   ['신호등 빨강에 누름', 'sig_commission'],
+  // ----- [연구] 영상 문제: 끝나기 전에 답했는지 -----
+  ['영상 문제 수', 'vid_n'],
+  ['영상 재생된 문제 수', 'vid_played'],
+  ['영상 끝나기 전 답한 수', 'vid_early'],
+  ['답할 때까지 본 비율 평균(%)', 'vid_watchPct'],
+  ['영상 끝난 뒤 답까지 평균(ms)', 'vid_afterEndMs'],
+  ['끝나기 전 답한 문제', 'vid_earlyList'],
   // ----- [연구] 센서 -----
   ['움직임 센서 수집', 'sensorMotion'],
   ['센서 허락', 'sensorPermission'],

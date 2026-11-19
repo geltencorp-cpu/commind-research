@@ -57,7 +57,7 @@
         }
         
         /* 모바일/태블릿 대응 */
-        @media (max-width: 1024px) {
+        @media (max-width: 1024px) and (orientation: portrait), (max-height: 480px) {
             .slide-container {
                 width: 96%; 
                 height: 92dvh; 
@@ -100,7 +100,7 @@
         .split-box > div { flex: 1; width: 100%; }
         
         /* 태블릿 세로 및 모바일 레이아웃 최적화 */
-        @media (max-width: 1024px) {
+        @media (max-width: 1024px) and (orientation: portrait), (max-height: 480px) {
             .split-box { 
                 flex-direction: column-reverse; 
                 gap: 20px; 
@@ -330,7 +330,7 @@
         .q7-left { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 2px dashed #ddd; padding-right: 15px; }
         .q7-right { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
-        @media (max-width: 1024px) {
+        @media (max-width: 1024px) and (orientation: portrait), (max-height: 480px) {
             .q7-layout { flex-direction: column; gap: 15px; overflow-y: auto; padding-top: 30px; justify-content: flex-start; align-items: center; }
             .q7-left { border-right: none; border-bottom: 2px dashed #ddd; padding-right: 0; padding-bottom: 15px; flex: none; width: 100%; }
             .q7-right { flex: none; width: 100%; }
@@ -367,10 +367,12 @@
         .pf-staff { display: flex; align-items: center; gap: 8px; font-size: 16px; color: #888; }
         .pf-staff input { width: 20px; height: 20px; }
         .research-bar input { font-size: 18px; padding: 6px 10px; border: 2px solid #ccc; border-radius: 10px; width: 210px; margin-left: 6px; }
-        @media (max-width: 1024px) {
-            .pf-layout { flex-direction: column; overflow-y: auto; justify-content: flex-start; height: auto; }
+        @media (max-width: 1024px) and (orientation: portrait), (max-height: 480px) {
+            .pf-layout { flex-direction: column; overflow-y: auto; justify-content: flex-start; height: auto; gap: 14px; }
             .pf-left { border-right: none; border-bottom: 2px dashed #ddd; padding: 0 0 15px 0; width: 100%; }
             .pf-right { width: 100%; }
+        }
+        @media (max-width: 600px) {
             .pf-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 700px) {
@@ -495,6 +497,12 @@
         .btn-submit:hover { background-color: #2ecc71; }
         .btn-submit:active { transform: translateY(4px); box-shadow: none; }
         .btn-submit:disabled { background-color: #ccc; box-shadow: none; cursor: not-allowed; }
+        .send-wait { display: none; margin-top: 14px; padding: 14px; border-radius: 14px; background: #fff8e1; color: #8a5a00; font-size: 22px; font-family: 'Jua', sans-serif; text-align: center; line-height: 1.4; }
+        .send-wait.show { display: block; }
+        .send-wait.done { background: #e8f5e9; color: #1e7e34; }
+        .send-wait.fail { background: #fdecea; color: #b3261e; }
+        .send-spinner { display: inline-block; width: 22px; height: 22px; border: 4px solid #f3c56b; border-top-color: transparent; border-radius: 50%; vertical-align: -4px; margin-right: 8px; animation: sendSpin 0.9s linear infinite; }
+        @keyframes sendSpin { to { transform: rotate(360deg); } }
         .btn-close-modal { position: absolute; top: 15px; right: 20px; font-size: 30px; cursor: pointer; color: #999; background: none; border: none; padding: 0; }
         .btn-close-modal:hover { color: #333; }
 
@@ -524,6 +532,33 @@
         #toast-msg.show {
             visibility: visible;
             opacity: 1;
+        }
+
+        /* [연구] 가로로 든 태블릿(화면 높이가 낮은 경우): 스크롤 없이 한 화면에 들어오도록 압축 */
+        @media (orientation: landscape) and (max-height: 860px) and (min-height: 481px) {
+            .slide-container { padding: 2vh 3vw; }
+            .pf-layout, .q7-layout { padding-top: 56px; }
+            .pf-box { padding: 6px 10px; }
+            .pf-title { font-size: clamp(22px, 4.6vh, 36px); margin-bottom: 1.6vh; }
+            .pf-left .date-display, .q7-left .date-display { height: clamp(52px, 10vh, 80px); margin-bottom: 1.6vh; }
+            .pf-left .num-btn, .q7-left .num-btn { height: clamp(44px, 8.4vh, 60px); }
+            .pf-right { gap: 2.2vh; }
+            .pf-grid { gap: 1.4vh 26px; }
+            .pf-row { gap: 0.8vh; }
+            .pf-label { font-size: clamp(17px, 3.2vh, 26px); }
+            .pf-btn { min-width: 0; min-height: clamp(42px, 7.6vh, 64px); font-size: clamp(17px, 3.2vh, 26px); padding: 4px 6px; }
+            .pf-opts-wrap { flex-wrap: nowrap; }
+            .pf-opts { gap: 8px; }
+            .pf-next { font-size: clamp(22px, 4.4vh, 30px); padding: 1.2vh 54px; }
+            .pf-foot { margin-top: 1.8vh; }
+            .task-box { padding-top: 46px; gap: 1.4vh; }
+            .task-box h2 { margin-bottom: 0.6vh; font-size: clamp(22px, 4.6vh, 40px); }
+            .lamp { width: clamp(64px, 14vh, 150px); font-size: clamp(36px, 8vh, 84px); }
+            .signal-light { padding: 1.4vh; gap: 1.4vh; }
+            .signal-scene { min-height: clamp(150px, 30vh, 340px); }
+            #clock-canvas { width: min(400px, 78vw, 44vh); }
+            .match-area { gap: clamp(46px, 11vh, 130px); }
+            .sign-grid { max-width: min(560px, 82vh); gap: 1.6vh; }
         }
     </style>
 </head>
@@ -563,6 +598,7 @@
                 <label for="privacy-agree">위 내용에 동의하며 전송합니다.</label>
             </div>
             <button id="btn-submit-data" class="btn-submit" onclick="app.submitUserData()" disabled>데이터 전송하기</button>
+            <div id="send-wait" class="send-wait" aria-live="polite"></div>
         </div>
     </div>
 
@@ -648,7 +684,7 @@
                     <div class="pf-opts"><button class="pf-btn" data-v="1">씀</button><button class="pf-btn" data-v="0">안 씀</button></div>
                 </div>
                 <div class="pf-row" data-field="tremor">
-                    <div class="pf-label">손 떨림이나 손가락 관절이 불편하신가요?</div>
+                    <div class="pf-label">손 떨림이나 관절이 불편하신가요?</div>
                     <div class="pf-opts"><button class="pf-btn" data-v="1">있음</button><button class="pf-btn" data-v="0">없음</button></div>
                 </div>
                 <div class="pf-row" data-field="memoryComplaint">
@@ -1199,6 +1235,8 @@
                 this.detach();
                 this.iframe = iframe;
                 this.muted = true; this.state = -1; this.connected = false; this.settled = false;
+                // [연구] 영상 재생 시간 추적
+                this.v = { attachAt: performance.now(), duration: null, cur: 0, curAt: 0, firstPlayAt: null, endedAt: null, maxCur: 0 };
 
                 const wrapper = iframe.closest('.media-wrapper');
                 let btn = wrapper.querySelector('.btn-sound-on');
@@ -1252,7 +1290,23 @@
                 const info = data.info;
                 if (info && typeof info === 'object') {
                     if (typeof info.muted === 'boolean') this.muted = info.muted;
-                    if (typeof info.playerState === 'number') this.state = info.playerState;
+                    if (typeof info.playerState === 'number' && info.playerState !== this.state) {
+                        this.state = info.playerState;
+                        // [연구] 재생 상태 변화 기록 (1 재생, 2 일시정지, 3 버퍼링, 0 끝남, 5 대기)
+                        const v = this.v, t = performance.now();
+                        if (v) {
+                            if (this.state === 1 && v.firstPlayAt === null) v.firstPlayAt = t;
+                            if (this.state === 0 && v.endedAt === null) v.endedAt = t;
+                        }
+                        ResearchLog.event('video_state', { state: this.state, cur: v ? v.cur : null, duration: v ? v.duration : null }, t);
+                    }
+                    if (this.v) {
+                        if (typeof info.duration === 'number' && info.duration > 0) this.v.duration = info.duration;
+                        if (typeof info.currentTime === 'number') {
+                            this.v.cur = info.currentTime; this.v.curAt = performance.now();
+                            if (info.currentTime > this.v.maxCur) this.v.maxCur = info.currentTime;
+                        }
+                    }
                 }
                 if (!this.connected && (data.event === 'onReady' || data.event === 'initialDelivery' || data.event === 'infoDelivery')) {
                     this.connected = true;
@@ -1260,6 +1314,27 @@
                     return;
                 }
                 if (this.settled) this.refreshButton();
+            },
+
+            // [연구] 답을 누른 순간 영상이 어디까지 재생됐는지
+            snapshot() {
+                const v = this.v;
+                if (!this.iframe || !v) return null;
+                const t = performance.now();
+                let cur = v.cur;
+                if (this.state === 1 && v.curAt) cur += (t - v.curAt) / 1000;   // 마지막 보고 이후 흐른 시간 보정
+                if (v.duration) cur = Math.min(cur, v.duration);
+                const played = v.firstPlayAt !== null;
+                const ended = v.endedAt !== null || (v.duration && cur >= v.duration - 0.5);
+                return {
+                    connected: this.connected, played, ended: !!ended, state: this.state,
+                    duration: v.duration ? Math.round(v.duration * 10) / 10 : null,
+                    at: Math.round(cur * 10) / 10,
+                    pct: (played && v.duration) ? Math.round(Math.min(1, cur / v.duration) * 100) : null,
+                    sinceShowMs: Math.round(t - v.attachAt),
+                    sincePlayMs: played ? Math.round(t - v.firstPlayAt) : null,
+                    sinceEndMs: v.endedAt !== null ? Math.round(t - v.endedAt) : null
+                };
             },
 
             isPlayingWithSound() {
@@ -2103,6 +2178,7 @@
                 this.taskScores = { memory: 0, clock: 0, signal: 0, match: 0 };
                 this.signalStats = { correct: 0, commission: 0, omission: 0, presses: 0, extraPresses: 0 };
                 this.signalRTs = [];
+                this.videoAnswers = {};
                 Profile.reset();
                 this.reportData = null; // 초기화
                 
@@ -2293,7 +2369,9 @@
                 if (qNum >= 9 && qNum <= 12) BehaviorTracker.recordReaction();
                 this.answers['q' + qNum] = score;
                 this.choices['q' + qNum] = this.lastOpt || '';
-                ResearchLog.event('answer', { q: qNum, score, opt: this.lastOpt || '' });
+                const video = VideoSound.snapshot();
+                if (video) { video.q = qNum; this.videoAnswers['q' + qNum] = video; }
+                ResearchLog.event('answer', { q: qNum, score, opt: this.lastOpt || '', video });
                 this.lastOpt = '';
                 if (qNum < this.totalSlides) this.goToSlide('q' + (qNum + 1));
                 else {
@@ -2635,9 +2713,27 @@
                     participantCode: this.participantCode || '',
                     ...Profile.summary(),
                     ...this.signalRTSummary(),
+                    ...this.videoSummary(),
                     sensorMotion: ResearchLog.peek() && ResearchLog.peek().motionSeen ? 1 : 0,
                     sensorPermission: ResearchLog.peek() ? ResearchLog.peek().sensorPermission : '',
                     logVersion: 1
+                };
+            },
+
+            // [연구] 영상 문제: 영상이 끝나기 전에 답한 횟수, 답할 때까지 본 비율 평균, 영상이 끝난 뒤 답하기까지 걸린 시간
+            videoSummary() {
+                const all = Object.values(this.videoAnswers || {});
+                const played = all.filter(v => v.played && v.duration);
+                const early = played.filter(v => !v.ended);
+                const after = played.filter(v => v.ended && v.sinceEndMs !== null).map(v => v.sinceEndMs);
+                const mean = (a) => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : '';
+                return {
+                    vid_n: all.length,                                   // 영상이 있던 문제 수
+                    vid_played: played.length,                           // 영상이 실제로 재생된 문제 수 (재생 안 된 문제는 판단 제외)
+                    vid_early: early.length,                             // 영상이 끝나기 전에 답한 문제 수
+                    vid_watchPct: mean(played.map(v => v.pct)),           // 답할 때까지 본 비율 평균 (%)
+                    vid_afterEndMs: mean(after),                         // 영상이 끝난 뒤 답하기까지 평균 (ms)
+                    vid_earlyList: early.map(v => v.q || '').join(',')
                 };
             },
 
@@ -2687,15 +2783,35 @@
                     return;
                 }
 
-                this.showToast('데이터 전송 중...');
+                // 전송에 몇 초 걸리므로 창 안에 '기다려 주세요'를 크게 보여 주고, 버튼을 다시 못 누르게 함
+                const btn = document.getElementById('btn-submit-data');
+                const wait = document.getElementById('send-wait');
+                const closeBtn = document.querySelector('#consent-modal .btn-close-modal');
+                if (btn.dataset.sending === '1') return;
+                btn.dataset.sending = '1';
+                btn.disabled = true;
+                btn.innerText = '보내는 중...';
+                if (closeBtn) closeBtn.style.visibility = 'hidden';
+                wait.className = 'send-wait show';
+                wait.innerHTML = '<span class="send-spinner"></span>보내는 중입니다.<br>창이 닫힐 때까지 잠시만 기다려 주세요.';
+                const finish = () => {
+                    btn.dataset.sending = '';
+                    btn.innerText = '데이터 전송하기';
+                    btn.disabled = !document.getElementById('privacy-agree').checked;
+                    if (closeBtn) closeBtn.style.visibility = '';
+                };
+                ResearchLog.event('consult_send', {});
                 this.sendToSheet(this.buildSendData(phone))
                 .then(() => {
-                    this.closeConsentModal();
-                    this.showToast('✅ 데이터가 안전하게 전송되었습니다. (상담원이 곧 연락드립니다)');
+                    wait.className = 'send-wait show done';
+                    wait.innerHTML = '✅ 잘 보내졌습니다.<br>상담원이 곧 연락드립니다.';
+                    setTimeout(() => { this.closeConsentModal(); wait.className = 'send-wait'; finish(); }, 2000);
                 })
                 .catch(err => {
                     console.error(err);
-                    this.showToast('❌ 전송 실패: 인터넷 연결을 확인해주세요.');
+                    wait.className = 'send-wait show fail';
+                    wait.innerHTML = '보내지 못했습니다.<br>인터넷 연결을 확인하고 다시 눌러 주세요.';
+                    finish();
                 });
             },
 
