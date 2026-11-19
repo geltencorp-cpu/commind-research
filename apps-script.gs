@@ -1,5 +1,6 @@
 // =====================================================================
-// 어르신 교통안전 검사 - 구글 시트 Apps Script
+// 어르신 교통안전 검사 (콤마인드 연구용) - 구글 시트 Apps Script
+// ※ 운영 중인 시트와 섞이지 않도록 연구용 시트를 새로 만들어 이 코드를 붙여 넣으세요.
 // 시트에서 [확장 프로그램 → Apps Script]에 이 코드를 통째로 붙여 넣고,
 // [배포 → 배포 관리 → 연필 아이콘 → 버전 "새 버전" → 배포]로 올리세요.
 // =====================================================================
@@ -64,8 +65,42 @@ var COLUMNS = [
   ['Q11 고른 보기', 'q11_choice'],
   ['Q12 고른 보기', 'q12_choice'],
   ['상담 안내', 'consultLevel'],
-  ['부족 영역', 'weakDomains']
+  ['부족 영역', 'weakDomains'],
+  // ----- [연구] 참여 번호 · 기본정보 -----
+  ['연구 참여 번호', 'participantCode'],
+  ['태어난 해', 'pf_birthYear'],
+  ['나이(올해-태어난 해)', 'pf_age'],
+  ['성별', 'pf_sex'],
+  ['교육연수', 'pf_eduYears'],
+  ['기기 사용(0안씀~3매일)', 'pf_digital'],
+  ['주로 쓰는 손', 'pf_hand'],
+  ['안경', 'pf_glasses'],
+  ['보청기', 'pf_hearingAid'],
+  ['손떨림·관절', 'pf_tremor'],
+  ['기억 저하 호소(0~2)', 'pf_memoryComplaint'],
+  ['어젯밤 잠(0~2)', 'pf_sleep'],
+  ['진행자 대신 입력', 'pf_assisted'],
+  // ----- [연구] 응답 과정 -----
+  ['태어난 해 입력 시간(ms)', 'rp_yearTypingMs'],
+  ['태어난 해 지운 횟수', 'rp_yearDeletes'],
+  ['기본정보 답 바꾼 횟수', 'rp_changes'],
+  ['기본정보1 소요(ms)', 'rp_profile1Ms'],
+  ['기본정보2 소요(ms)', 'rp_profile2Ms'],
+  // ----- [연구] 신호등 반응시간 -----
+  ['신호등 초록 반응 평균(ms)', 'sig_goRtMean'],
+  ['신호등 초록 반응 표준편차(ms)', 'sig_goRtSd'],
+  ['신호등 초록 반응 수', 'sig_goN'],
+  ['신호등 빨강 누름 평균(ms)', 'sig_nogoRtMean'],
+  ['신호등 놓침', 'sig_omission'],
+  ['신호등 빨강에 누름', 'sig_commission'],
+  // ----- [연구] 센서 -----
+  ['움직임 센서 수집', 'sensorMotion'],
+  ['센서 허락', 'sensorPermission'],
+  ['기록 형식 버전', 'logVersion']
 ];
+
+// [연구] 원시 행동 기록을 저장할 드라이브 폴더 이름
+var RAW_FOLDER_NAME = 'COMMIND_원시기록';
 
 function keyIndex(key) {
   for (var i = 0; i < COLUMNS.length; i++) if (COLUMNS[i][1] === key) return i;
@@ -107,6 +142,38 @@ function registerInstitution(ss, name, location) {
   if (!exists) getInstSheet(ss).appendRow([name, Number(m[1]), Number(m[2]), '']);
 }
 
+// [연구] 원시 기록 폴더 (없으면 내 드라이브에 새로 만듦)
+function getRawFolder() {
+  var it = DriveApp.getFoldersByName(RAW_FOLDER_NAME);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(RAW_FOLDER_NAME);
+}
+
+// [연구] '원시기록' 탭: 기록ID / 연구 참여 번호 / 저장 시각 / 파일 이름 / 파일 주소 / 크기(KB) / 터치 수 / 움직임 수 / 이벤트 수
+function getRawSheet(ss) {
+  var sh = ss.getSheetByName('원시기록');
+  if (!sh) {
+    sh = ss.insertSheet('원시기록', ss.getSheets().length);
+    sh.getRange(1, 1, 1, 9).setValues([['기록ID', '연구 참여 번호', '저장 시각', '파일 이름', '파일 주소', '크기(KB)', '터치 수', '움직임 수', '이벤트 수']]);
+  }
+  return sh;
+}
+
+// [연구] 원시 행동 기록을 드라이브에 JSON 파일로 저장 (같은 기록ID면 덮어씀)
+function saveRaw(ss, data) {
+  var id = String(data.recordId || '').replace(/[^A-Za-z0-9_-]/g, '');
+  if (!id) return;
+  var code = String(data.participantCode || '').replace(/[^A-Za-z0-9가-힣_-]/g, '');
+  var name = (code ? code + '_' : '') + id + '.json';
+  var text = JSON.stringify(data.raw || {});
+  var folder = getRawFolder();
+  var old = folder.getFilesByName(name);
+  while (old.hasNext()) old.next().setTrashed(true);
+  var file = folder.createFile(name, text, 'application/json');
+  var c = (data.raw && data.raw.counts) || {};
+  getRawSheet(ss).appendRow([data.recordId, data.participantCode || '', new Date(), name, file.getUrl(),
+    Math.round(text.length / 1024), c.touch || 0, c.motion || 0, c.events || 0]);
+}
+
 // 퀴즈 결과 저장
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -115,6 +182,12 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheets()[0];
     var data = JSON.parse(e.postData.contents);
+
+    // [연구] 원시 기록은 드라이브 파일로 저장하고 끝
+    if (data.type === 'raw') {
+      saveRaw(ss, data);
+      return ContentService.createTextOutput('OK');
+    }
 
     // 예전 표(첫 열이 '일시')라면 맨 앞에 '위치' 열을 한 번만 끼워 넣음
     if (sheet.getLastRow() > 0 && sheet.getRange(1, 1).getValue() === '일시') {

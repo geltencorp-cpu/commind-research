@@ -345,6 +345,38 @@
         
         .season-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; max-width: 360px; margin: 0 auto; }
         .season-btn { background: white; border: 3px solid #eee; border-radius: 15px; font-size: 24px; font-weight: bold; padding: 15px; color: #555; cursor: pointer; transition: 0.2s; font-family: 'Jua', sans-serif; }
+        /* [연구] 기본정보 화면 */
+        .pf-layout { display: flex; gap: 30px; width: 100%; max-width: 1200px; height: 100%; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .pf-left { flex: 1; display: flex; flex-direction: column; align-items: center; border-right: 2px dashed #ddd; padding-right: 20px; }
+        .pf-right { flex: 1.2; display: flex; flex-direction: column; gap: 22px; }
+        .pf-box { width: 100%; max-width: 1100px; max-height: 100%; overflow-y: auto; padding: 20px; box-sizing: border-box; text-align: center; }
+        .pf-title { text-align: center; margin: 0 0 18px 0; }
+        .pf-year { min-width: 130px; }
+        .pf-hint { min-height: 26px; color: #c0392b; font-size: 20px; margin: 10px 0 0 0; }
+        .pf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 28px; text-align: left; }
+        .pf-row { display: flex; flex-direction: column; gap: 8px; }
+        .pf-label { font-family: 'Jua', sans-serif; font-size: clamp(20px, 2.4vw, 26px); color: #333; }
+        .pf-opts { display: flex; gap: 10px; }
+        .pf-opts-wrap { flex-wrap: wrap; }
+        .pf-btn { flex: 1; min-width: 96px; min-height: 64px; font-family: 'Jua', sans-serif; font-size: clamp(20px, 2.4vw, 26px); background: #fff; border: 3px solid #e0e0e0; border-radius: 16px; color: #444; cursor: pointer; padding: 6px 10px; }
+        .pf-btn.selected { background: #fff3e0; border-color: #ffaa00; color: #d35400; box-shadow: 0 4px 10px rgba(255, 170, 0, 0.25); }
+        .pf-next { margin-top: 18px; font-size: 30px; padding: 14px 60px; }
+        .pf-next:disabled { opacity: 0.4; cursor: default; }
+        .pf-foot { display: flex; justify-content: center; align-items: center; gap: 28px; flex-wrap: wrap; margin-top: 16px; }
+        .pf-foot .pf-next { margin-top: 0; }
+        .pf-staff { display: flex; align-items: center; gap: 8px; font-size: 16px; color: #888; }
+        .pf-staff input { width: 20px; height: 20px; }
+        .research-bar input { font-size: 18px; padding: 6px 10px; border: 2px solid #ccc; border-radius: 10px; width: 210px; margin-left: 6px; }
+        @media (max-width: 1024px) {
+            .pf-layout { flex-direction: column; overflow-y: auto; justify-content: flex-start; height: auto; }
+            .pf-left { border-right: none; border-bottom: 2px dashed #ddd; padding: 0 0 15px 0; width: 100%; }
+            .pf-right { width: 100%; }
+            .pf-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 700px) {
+            .pf-layout, .pf-box { padding-top: 70px; }
+        }
+
         .season-btn.selected { background: #fff3e0; border-color: #ffaa00; color: #d35400; transform: scale(1.02); box-shadow: 0 4px 10px rgba(255, 170, 0, 0.2); }
 
         /* 인지 차트 */
@@ -556,13 +588,88 @@
             <p>문제를 풀면 <strong>6대 인지 영역 분석</strong>과<br><strong>무의식적 행동 패턴</strong>을 분석해드립니다.</p>
             <button class="btn-start btn-action" onclick="app.start()">시작하기</button>
             <div class="inst-bar"><i class="fa-solid fa-location-dot" style="color:#e67e22;"></i> 검사 장소: <b id="inst-name">선택 안 됨</b> <button class="inst-change" onclick="InstPicker.open()">변경</button></div>
+            <div class="inst-bar research-bar"><i class="fa-solid fa-id-card" style="color:#6250d6;"></i> 연구 참여 번호 <input type="text" id="participant-code" maxlength="20" placeholder="진행자 입력 (예: P001)" autocomplete="off"></div>
             <p style="font-size: clamp(14px, 1.8vw, 17px); color: #888; margin-top: 2.5vh; font-weight: normal;">※ 검사 결과와 검사 장소(위치)는 이름 없이 저장되어 교육 개선에 활용됩니다.</p>
+        </div>
+    </div>
+
+    <!-- [연구] 기본정보 1: 태어난 해 · 성별 · 학교 -->
+    <div class="slide-container" id="page-profile1">
+        <button class="btn-prev" onclick="app.goToSlide('start')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="pf-layout">
+            <div class="pf-left">
+                <h2 class="pf-title">태어나신 해를 눌러 주세요</h2>
+                <div class="date-display"><span id="pf-year" class="date-part pf-year"></span>년</div>
+                <div class="numpad">
+                    <button class="num-btn" onclick="Profile.digit(1)">1</button><button class="num-btn" onclick="Profile.digit(2)">2</button><button class="num-btn" onclick="Profile.digit(3)">3</button>
+                    <button class="num-btn" onclick="Profile.digit(4)">4</button><button class="num-btn" onclick="Profile.digit(5)">5</button><button class="num-btn" onclick="Profile.digit(6)">6</button>
+                    <button class="num-btn" onclick="Profile.digit(7)">7</button><button class="num-btn" onclick="Profile.digit(8)">8</button><button class="num-btn" onclick="Profile.digit(9)">9</button>
+                    <button class="num-btn" onclick="Profile.undo()"><i class="fa-solid fa-delete-left"></i></button><button class="num-btn" onclick="Profile.digit(0)">0</button>
+                </div>
+                <p class="pf-hint" id="pf-year-hint"></p>
+            </div>
+            <div class="pf-right">
+                <div class="pf-row" data-field="sex">
+                    <div class="pf-label">성별</div>
+                    <div class="pf-opts"><button class="pf-btn" data-v="M">남자</button><button class="pf-btn" data-v="F">여자</button></div>
+                </div>
+                <div class="pf-row" data-field="edu">
+                    <div class="pf-label">마지막으로 다니신 학교</div>
+                    <div class="pf-opts pf-opts-wrap">
+                        <button class="pf-btn" data-v="0">안 다님</button><button class="pf-btn" data-v="6">초등학교</button><button class="pf-btn" data-v="9">중학교</button>
+                        <button class="pf-btn" data-v="12">고등학교</button><button class="pf-btn" data-v="16">대학교 이상</button>
+                    </div>
+                </div>
+                <button id="pf-next1" class="btn-start pf-next" onclick="Profile.next(1)" disabled>다음</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- [연구] 기본정보 2: 기기 사용 · 손 · 눈귀 · 생활 -->
+    <div class="slide-container" id="page-profile2">
+        <button class="btn-prev" onclick="app.goToSlide('profile1')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="pf-box">
+            <h2 class="pf-title">몇 가지만 더 여쭤볼게요</h2>
+            <div class="pf-grid">
+                <div class="pf-row" data-field="digital">
+                    <div class="pf-label">스마트폰이나 태블릿을 쓰시나요?</div>
+                    <div class="pf-opts pf-opts-wrap"><button class="pf-btn" data-v="0">안 씀</button><button class="pf-btn" data-v="1">가끔</button><button class="pf-btn" data-v="2">자주</button><button class="pf-btn" data-v="3">매일</button></div>
+                </div>
+                <div class="pf-row" data-field="hand">
+                    <div class="pf-label">주로 쓰는 손</div>
+                    <div class="pf-opts"><button class="pf-btn" data-v="R">오른손</button><button class="pf-btn" data-v="L">왼손</button></div>
+                </div>
+                <div class="pf-row" data-field="glasses">
+                    <div class="pf-label">안경을 쓰시나요?</div>
+                    <div class="pf-opts"><button class="pf-btn" data-v="1">씀</button><button class="pf-btn" data-v="0">안 씀</button></div>
+                </div>
+                <div class="pf-row" data-field="hearingAid">
+                    <div class="pf-label">보청기를 쓰시나요?</div>
+                    <div class="pf-opts"><button class="pf-btn" data-v="1">씀</button><button class="pf-btn" data-v="0">안 씀</button></div>
+                </div>
+                <div class="pf-row" data-field="tremor">
+                    <div class="pf-label">손 떨림이나 손가락 관절이 불편하신가요?</div>
+                    <div class="pf-opts"><button class="pf-btn" data-v="1">있음</button><button class="pf-btn" data-v="0">없음</button></div>
+                </div>
+                <div class="pf-row" data-field="memoryComplaint">
+                    <div class="pf-label">요즘 깜빡하는 일이 늘었나요?</div>
+                    <div class="pf-opts pf-opts-wrap"><button class="pf-btn" data-v="0">아니다</button><button class="pf-btn" data-v="1">조금</button><button class="pf-btn" data-v="2">많이</button></div>
+                </div>
+                <div class="pf-row" data-field="sleep">
+                    <div class="pf-label">어젯밤 잠은 어떠셨나요?</div>
+                    <div class="pf-opts pf-opts-wrap"><button class="pf-btn" data-v="2">잘 잤다</button><button class="pf-btn" data-v="1">보통</button><button class="pf-btn" data-v="0">설쳤다</button></div>
+                </div>
+            </div>
+            <div class="pf-foot">
+                <label class="pf-staff"><input type="checkbox" id="pf-assisted" onchange="Profile.assisted(this.checked)"> 진행자가 대신 눌러 드렸어요</label>
+                <button id="pf-next2" class="btn-start pf-next" onclick="Profile.next(2)" disabled>다음</button>
+            </div>
         </div>
     </div>
 
     <!-- [NEW] 기억 과제: 표지판 3개 외우기 (마지막 Q16에서 다시 물어봄) -->
     <div class="slide-container" id="page-memo">
-        <button class="btn-prev" onclick="app.goToSlide('start')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <button class="btn-prev" onclick="app.goToSlide('profile2')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
         <div class="task-box">
             <h2>먼저, 표지판 <span style="color:#e74c3c;">3개</span>를 기억하세요</h2>
             <p class="task-guide"><i class="fa-solid fa-lightbulb"></i> 마지막에 다시 물어봅니다. 잘 봐두세요!</p>
@@ -817,7 +924,7 @@
             </div>
             <div class="task-guide" id="signal-count" style="color:#555;"></div>
             <button id="signal-start" class="btn-start btn-action task-btn" onclick="SignalTask.begin()">시작</button>
-            <button id="signal-press" class="btn-cross" style="display:none;" onpointerdown="SignalTask.press()">건너기</button>
+            <button id="signal-press" class="btn-cross" style="display:none;" onpointerdown="SignalTask.press(event)">건너기</button>
         </div>
     </div>
 
@@ -959,6 +1066,7 @@
         </div>
     </div>
 
+    <script src="research-logger.js"></script>
     <script>
         const BehaviorTracker = {
             data: {
@@ -1228,6 +1336,7 @@
             enter() {
                 document.getElementById('memo-grid').innerHTML = MEMO_TARGETS.map(k =>
                     `<div class="sign-item">${SIGNS[k].svg}<span>${SIGNS[k].name}</span></div>`).join('');
+                ResearchLog.event('memo_show', { targets: MEMO_TARGETS.slice() });
             }
         };
 
@@ -1258,6 +1367,7 @@
                 if (this.picked.length !== 3) return;
                 const hits = this.picked.filter(k => MEMO_TARGETS.includes(k)).length;
                 app.taskScores.memory = hits / 3;
+                ResearchLog.event('recall_submit', { picked: this.picked.slice(), targets: MEMO_TARGETS.slice(), hits });
                 app.finishTask(16);
             }
         };
@@ -1404,6 +1514,8 @@
                     return;
                 }
                 app.taskScores.clock = this.score();
+                // 획 좌표는 시계판 기준 -1~1 (가운데 0,0)
+                ResearchLog.event('clock_submit', { score: app.taskScores.clock, strokes: this.strokes.map(st => st.map(pt => [Math.round(pt.x * 1000) / 1000, Math.round(pt.y * 1000) / 1000])) });
                 app.finishTask(13);
             }
         };
@@ -1411,7 +1523,7 @@
         // 집행기능 과제 (Q14): 초록불에만 누르기
         const SignalTask = {
             TOTAL: 10, GREENS: 6, LIGHT_MS: 2200, GAP_MS: 1000,
-            timers: [], running: false, seq: [], trial: -1, lightOn: false, pressed: false, stats: null,
+            timers: [], running: false, seq: [], trial: -1, lightOn: false, pressed: false, stats: null, rts: [], onAt: 0, paintAt: 0,
             el(id) { return document.getElementById(id); },
             later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
             stop() {
@@ -1440,6 +1552,8 @@
                 for (let i = 0; i < this.TOTAL; i++) base.push(i < this.GREENS ? 'green' : 'red');
                 this.seq = shuffled(base);
                 this.stats = { correct: 0, commission: 0, omission: 0, presses: 0, extraPresses: 0 };
+                this.rts = []; this.onAt = 0; this.paintAt = 0;
+                ResearchLog.event('signal_begin', { seq: this.seq.slice(), lightMs: this.LIGHT_MS, gapMs: this.GAP_MS });
                 this.running = true;
                 this.el('signal-start').style.display = 'none';
                 this.el('signal-press').style.display = '';
@@ -1452,11 +1566,21 @@
                 this.el('signal-walkers').classList.remove('go');
                 this.say('');
                 this.setLamp(this.seq[i]);
+                this.onAt = performance.now();
+                const trial = i, color = this.seq[i];
+                ResearchLog.event('signal_on', { trial, color }, this.onAt);
+                // 불이 실제로 화면에 그려진 시각 (다음 프레임)
+                requestAnimationFrame((ts) => { if (this.trial === trial) { this.paintAt = ts; ResearchLog.event('signal_paint', { trial }, ts); } });
                 this.el('signal-count').innerText = `${i + 1} / ${this.TOTAL}`;
                 this.later(() => this.endTrial(), this.LIGHT_MS);
             },
-            press() {
+            press(e) {
                 if (!this.running) return;
+                const at = (e && e.timeStamp) ? e.timeStamp : performance.now();
+                const base = this.paintAt && this.paintAt >= this.onAt ? this.paintAt : this.onAt;
+                const rt = this.lightOn ? Math.round((at - base) * 10) / 10 : null;
+                ResearchLog.event('signal_press', { trial: this.trial, color: this.seq[this.trial], lightOn: this.lightOn, first: this.lightOn && !this.pressed, rt }, at);
+                if (this.lightOn && !this.pressed) this.rts.push({ trial: this.trial, color: this.seq[this.trial], rt });
                 // 누른 횟수는 모두 기록. 같은 신호에 두 번 이상 누르거나 불이 꺼졌을 때 누르면 '불필요한 누름'
                 this.stats.presses++;
                 if (!this.lightOn || this.pressed) { this.stats.extraPresses++; return; }
@@ -1472,6 +1596,7 @@
             },
             endTrial() {
                 this.lightOn = false;
+                ResearchLog.event('signal_off', { trial: this.trial, color: this.seq[this.trial], pressed: this.pressed });
                 this.setLamp(null);
                 if (!this.pressed) {
                     if (this.seq[this.trial] === 'green') { this.stats.omission++; this.say('초록불을 놓쳤어요', true); }
@@ -1485,6 +1610,8 @@
                 this.say('끝났습니다. 수고하셨어요!');
                 app.taskScores.signal = this.stats.correct / this.TOTAL;
                 app.signalStats = this.stats;
+                app.signalRTs = this.rts.slice();
+                ResearchLog.event('signal_end', Object.assign({}, this.stats));
                 this.later(() => app.finishTask(14), 1200);
             }
         };
@@ -1623,6 +1750,7 @@
                 if (Object.keys(this.links).length !== this.ITEMS.length) return;
                 const correct = Object.keys(this.links).filter(p => this.links[p] === p).length;
                 app.taskScores.match = correct / this.ITEMS.length;
+                ResearchLog.event('match_submit', { links: Object.assign({}, this.links), correct });
                 app.finishTask(15);
             }
         };
@@ -1666,7 +1794,7 @@
                 });
             },
             loadPlaces() {
-                if (!app.googleScriptURL) { this.places = []; return Promise.resolve(); }
+                if (!app.hasScriptURL()) { this.places = []; return Promise.resolve(); }
                 return fetch(app.googleScriptURL + '?action=places&t=' + Date.now())
                     .then(r => r.json())
                     .then(d => { this.places = (d && d.ok && Array.isArray(d.places)) ? d.places : []; })
@@ -1771,6 +1899,98 @@
             }
         };
 
+        // [연구] 기본정보 입력 (태어난 해 · 성별 · 학교 · 기기 사용 등)과 응답 과정 기록
+        const Profile = {
+            REQ1: ['birthYear', 'sex', 'edu'],
+            REQ2: ['digital', 'hand'],
+            data: {}, meta: {}, year: '', yearDeletes: 0, yearFirstAt: 0, enterAt: {}, leaveMs: {}, isAssisted: false, bound: false,
+            thisYear() { return new Date().getFullYear(); },
+            init() {
+                if (this.bound) return;
+                this.bound = true;
+                document.querySelectorAll('.pf-row').forEach(row => {
+                    row.querySelectorAll('.pf-btn').forEach(b => b.addEventListener('click', () => this.pick(row, b)));
+                });
+            },
+            reset() {
+                this.data = {}; this.meta = {}; this.year = ''; this.yearDeletes = 0; this.yearFirstAt = 0;
+                this.enterAt = {}; this.leaveMs = {}; this.isAssisted = false;
+                document.querySelectorAll('.pf-btn.selected').forEach(b => b.classList.remove('selected'));
+                const chk = document.getElementById('pf-assisted'); if (chk) chk.checked = false;
+                this.showYear(); this.check();
+            },
+            enter(page) { this.enterAt[page] = performance.now(); },
+            sinceEnter(page) { return this.enterAt[page] ? Math.round(performance.now() - this.enterAt[page]) : null; },
+            pick(row, btn) {
+                const field = row.dataset.field, v = btn.dataset.v;
+                const page = row.closest('.slide-container').id.replace('page-', '');
+                const m = this.meta[field] || (this.meta[field] = { firstMs: null, changes: 0 });
+                if (this.data[field] === undefined) m.firstMs = this.sinceEnter(page);
+                else if (this.data[field] !== v) m.changes++;
+                this.data[field] = v;
+                row.querySelectorAll('.pf-btn').forEach(b => b.classList.toggle('selected', b === btn));
+                ResearchLog.event('profile_pick', { field, v, changes: m.changes });
+                this.check();
+            },
+            digit(n) {
+                if (this.year.length >= 4) return;
+                if (!this.year) this.yearFirstAt = performance.now();
+                this.year += String(n);
+                this.showYear();
+                if (this.year.length === 4) {
+                    const y = Number(this.year), max = this.thisYear() - 40;
+                    if (y < 1915 || y > max) {
+                        document.getElementById('pf-year-hint').innerText = `${this.year}년이 맞으신가요? 지우고 다시 눌러 주세요.`;
+                        ResearchLog.event('profile_year_invalid', { year: this.year });
+                    } else {
+                        this.data.birthYear = this.year;
+                        this.meta.birthYear = { firstMs: this.sinceEnter('profile1'), typingMs: Math.round(performance.now() - this.yearFirstAt), deletes: this.yearDeletes };
+                        ResearchLog.event('profile_year', Object.assign({ year: this.year }, this.meta.birthYear));
+                    }
+                }
+                this.check();
+            },
+            undo() {
+                if (!this.year) return;
+                this.year = this.year.slice(0, -1);
+                this.yearDeletes++;
+                delete this.data.birthYear;
+                this.showYear(); this.check();
+            },
+            showYear() {
+                const el = document.getElementById('pf-year'); if (el) el.innerText = this.year;
+                const hint = document.getElementById('pf-year-hint'); if (hint && this.year.length < 4) hint.innerText = '';
+            },
+            assisted(v) { this.isAssisted = !!v; ResearchLog.event('profile_assisted', { assisted: this.isAssisted }); },
+            check() {
+                const ok = (list) => list.every(f => this.data[f] !== undefined);
+                const b1 = document.getElementById('pf-next1'), b2 = document.getElementById('pf-next2');
+                if (b1) b1.disabled = !ok(this.REQ1);
+                if (b2) b2.disabled = !ok(this.REQ2);
+            },
+            next(n) {
+                this.leaveMs['profile' + n] = this.sinceEnter('profile' + n);
+                app.goToSlide(n === 1 ? 'profile2' : 'memo');
+            },
+            // 시트 한 줄에 들어갈 기본정보 + 응답 과정 요약
+            summary() {
+                const d = this.data, num = (v) => (v === undefined || v === '') ? '' : Number(v);
+                const changes = Object.values(this.meta).reduce((a, m) => a + (m.changes || 0), 0);
+                return {
+                    pf_birthYear: num(d.birthYear),
+                    pf_age: d.birthYear ? this.thisYear() - Number(d.birthYear) : '',   // 올해 - 태어난 해 (생일 반영 안 함)
+                    pf_sex: d.sex || '', pf_eduYears: num(d.edu), pf_digital: num(d.digital), pf_hand: d.hand || '',
+                    pf_glasses: num(d.glasses), pf_hearingAid: num(d.hearingAid), pf_tremor: num(d.tremor),
+                    pf_memoryComplaint: num(d.memoryComplaint), pf_sleep: num(d.sleep),
+                    pf_assisted: this.isAssisted ? 1 : 0,
+                    rp_yearTypingMs: this.meta.birthYear ? this.meta.birthYear.typingMs : '',
+                    rp_yearDeletes: this.yearDeletes,
+                    rp_changes: changes,
+                    rp_profile1Ms: this.leaveMs.profile1 || '', rp_profile2Ms: this.leaveMs.profile2 || ''
+                };
+            }
+        };
+
         const app = {
             answers: { q1:0, q2:0, q3:0, q4:0, q5:0, q6:0, q7:0, q8:0, q9:0, q10:0, q11:0, q12:0 },
             totalSlides: 16,
@@ -1804,6 +2024,7 @@
                     if (b) this.lastOpt = Number(b.dataset.opt) || '';
                 }, true);
                 InstPicker.init();
+                Profile.init();
                 BehaviorTracker.init();
                 VideoSound.init();
                 this.showToast("앱이 준비되었습니다.");
@@ -1833,12 +2054,18 @@
                 // [수정] 시작 시 강제 전체 화면 코드 제거됨
                 // BehaviorTracker.toggleFullScreen(); <-- 삭제됨
                 
+                // [연구] 아이폰·아이패드의 움직임 센서 허락은 버튼을 누른 이 순간에만 물을 수 있음
+                const sensorAsk = ResearchLog.requestSensors();
                 this.resetVariables();
                 this.recordId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+                this.participantCode = (document.getElementById('participant-code').value || '').trim();
                 this.autoSaved = false;
+                ResearchLog.begin(this.recordId);
+                sensorAsk.then(state => ResearchLog.event('sensor_permission', { state }));
+                ResearchLog.event('session_start', { participantCode: this.participantCode, institution: InstPicker.name || '' });
                 this.requestLocation();
                 this.shuffleOptions();
-                this.goToSlide('memo'); // 표지판 3개를 먼저 보여준 뒤 Q1 시작
+                this.goToSlide('profile1'); // [연구] 기본정보 → 표지판 3개 기억 → Q1
             },
 
             // 검사 장소(기관) 구분용 위치. 브라우저가 위치 사용 허락을 한 번 묻습니다.
@@ -1875,6 +2102,8 @@
                 this.weakDomains = '';
                 this.taskScores = { memory: 0, clock: 0, signal: 0, match: 0 };
                 this.signalStats = { correct: 0, commission: 0, omission: 0, presses: 0, extraPresses: 0 };
+                this.signalRTs = [];
+                Profile.reset();
                 this.reportData = null; // 초기화
                 
                 ['spring', 'summer', 'autumn', 'winter'].forEach(s => {
@@ -1990,6 +2219,7 @@
 
                 this.orientation = { monthScore, dayScore, seasonScore };
                 this.answers['q7'] = monthScore + dayScore + seasonScore;
+                ResearchLog.event('date_answer', { month: inputM, day: inputD, season: this.selectedSeason, monthScore, dayScore, seasonScore });
                 if (7 < this.totalSlides) this.goToSlide('q8');
                 else this.calcResult();
             },
@@ -2023,7 +2253,9 @@
                 if (target) {
                     target.classList.add('active');
                     BehaviorTracker.startTimer();
-                    const tasks = { memo: MemoTask, q13: ClockTask, q14: SignalTask, q15: MatchTask, q16: RecallTask };
+                    ResearchLog.slide(id);
+                    const tasks = { memo: MemoTask, q13: ClockTask, q14: SignalTask, q15: MatchTask, q16: RecallTask,
+                        profile1: { enter: () => Profile.enter('profile1') }, profile2: { enter: () => Profile.enter('profile2') } };
                     if (tasks[id]) tasks[id].enter();
                     const iframe = target.querySelector('iframe');
                     if (iframe && iframe.dataset.src) {
@@ -2061,6 +2293,7 @@
                 if (qNum >= 9 && qNum <= 12) BehaviorTracker.recordReaction();
                 this.answers['q' + qNum] = score;
                 this.choices['q' + qNum] = this.lastOpt || '';
+                ResearchLog.event('answer', { q: qNum, score, opt: this.lastOpt || '' });
                 this.lastOpt = '';
                 if (qNum < this.totalSlides) this.goToSlide('q' + (qNum + 1));
                 else {
@@ -2323,9 +2556,14 @@
                 this.weakDomains = weak.map(d => d.name).join(', ');
 
                 // (상담 안내 단계까지 정해진 뒤) 검사를 마치면 전화번호 없이 결과를 시트에 자동 저장
-                if (!this.autoSaved && this.googleScriptURL) {
+                if (!this.autoSaved) {
                     this.autoSaved = true;
-                    this.sendToSheet(this.buildSendData("")).catch(err => console.error("자동 저장 실패", err));
+                    const row = this.buildSendData("");
+                    this.sendToSheet(row).catch(err => console.error("자동 저장 실패", err));
+                    // [연구] 원시 기록은 시트가 아니라 드라이브 파일로 따로 저장
+                    const raw = ResearchLog.finish({ summary: Object.assign({}, row, { phone: undefined }), profile: Profile.data, profileMeta: Profile.meta });
+                    this.lastRaw = raw;
+                    if (raw) this.sendRaw(raw).catch(err => console.error("원시 기록 저장 실패", err));
                 }
                 document.getElementById('cognitive-warning').innerHTML = warningHTML;
             },
@@ -2392,12 +2630,33 @@
                     q1_choice: this.choices.q1 || '', q3_choice: this.choices.q3 || '', q4_choice: this.choices.q4 || '',
                     q5_choice: this.choices.q5 || '', q6_choice: this.choices.q6 || '', q8_choice: this.choices.q8 || '',
                     q9_choice: this.choices.q9 || '', q10_choice: this.choices.q10 || '', q11_choice: this.choices.q11 || '',
-                    q12_choice: this.choices.q12 || ''
+                    q12_choice: this.choices.q12 || '',
+                    // [연구] 참여 번호 · 기본정보 · 응답 과정 · 신호등 반응시간 · 센서 수집 여부
+                    participantCode: this.participantCode || '',
+                    ...Profile.summary(),
+                    ...this.signalRTSummary(),
+                    sensorMotion: ResearchLog.peek() && ResearchLog.peek().motionSeen ? 1 : 0,
+                    sensorPermission: ResearchLog.peek() ? ResearchLog.peek().sensorPermission : '',
+                    logVersion: 1
                 };
             },
 
+            // [연구] 신호등 과제: 초록불에 맞게 누른 반응시간(ms) 평균·표준편차, 빨간불에 누른 반응시간 평균
+            signalRTSummary() {
+                const rts = (this.signalRTs || []).filter(r => r.rt !== null && r.rt !== undefined);
+                const go = rts.filter(r => r.color === 'green').map(r => r.rt);
+                const nogo = rts.filter(r => r.color === 'red').map(r => r.rt);
+                const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+                const sd = (a) => { if (a.length < 2) return null; const m = mean(a); return Math.sqrt(a.reduce((x, y) => x + (y - m) * (y - m), 0) / (a.length - 1)); };
+                const r0 = (v) => v === null ? '' : Math.round(v);
+                return { sig_goRtMean: r0(mean(go)), sig_goRtSd: r0(sd(go)), sig_goN: go.length, sig_nogoRtMean: r0(mean(nogo)),
+                    sig_omission: this.signalStats.omission, sig_commission: this.signalStats.commission };
+            },
+
             // Google Apps Script 로 전송. 응답 내용은 읽지 않고 보내기만 함 (no-cors)
+            hasScriptURL() { return /^https:\/\//.test(this.googleScriptURL || ''); },
             sendToSheet(data) {
+                if (!this.hasScriptURL()) { console.warn('Apps Script 주소가 없어 시트 저장을 건너뜀', data); return Promise.resolve(); }
                 return fetch(this.googleScriptURL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -2406,12 +2665,23 @@
                 });
             },
 
+            // [연구] 원시 행동 기록 전송 (Apps Script 가 드라이브에 JSON 파일로 저장)
+            sendRaw(raw) {
+                if (!this.hasScriptURL()) { console.warn('Apps Script 주소가 없어 원시 기록 저장을 건너뜀'); return Promise.resolve(); }
+                return fetch(this.googleScriptURL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ type: 'raw', recordId: this.recordId, participantCode: this.participantCode || '', raw })
+                });
+            },
+
             // 상담 신청: 자동 저장된 줄에 전화번호를 덧붙여 다시 전송
             submitUserData() {
                 const phone = document.getElementById('user-phone').value;
                 if(phone.length < 10) { this.showToast('휴대폰 번호를 올바르게 입력해주세요.'); return; }
 
-                if (!this.googleScriptURL) {
+                if (!this.hasScriptURL()) {
                     alert("데이터 저장을 위해 구글 스크립트 URL 설정이 필요합니다.\n(HTML 파일 내 googleScriptURL 변수를 확인하세요)");
                     this.closeConsentModal();
                     return;
