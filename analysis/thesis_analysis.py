@@ -153,7 +153,7 @@ def main():
         cs = [c for role in roles for c in M["indicators"][dom][role].values()]
         return d[cs].to_numpy(float)
     X_att, X_att1 = cols("attention"), cols("attention", ("primary",))
-    X_mem = cols("memory")
+    X_mem, X_mem1 = cols("memory"), cols("memory", ("primary",))
     pred_in = {"attention": predict(fit(X_att, y["attention"]), X_att),
                "memory": predict(fit(X_mem, y["memory"]), X_mem)}
     pred_cv = {"attention": loocv(X_att, y["attention"]), "memory": loocv(X_mem, y["memory"])}
@@ -186,6 +186,7 @@ def main():
         rows.append([lab, name, Xs.shape[1], Xb.shape[1], rs, rb, rb - rs, F, p, mae_s, mae_b])
     AE = np.column_stack([age, edu])
     add("신호등만 → + 보조 지표", X_att1, X_att, y["attention"], "집중력")
+    add("기억 과제만 → + 보조 지표", X_mem1, X_mem, y["memory"], "기억력")
     add("나이·학력만 → + 행동 지표", AE, np.column_stack([AE, X_att]), y["attention"], "집중력")
     add("나이·학력만 → + 행동 지표", AE, np.column_stack([AE, X_mem]), y["memory"], "기억력")
     add("나이만 → + 콤마인드 두 점수", age[:, None], Xb_in, y["brain_age"], "뇌 나이")
