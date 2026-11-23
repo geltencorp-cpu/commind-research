@@ -388,8 +388,25 @@ def extract(path):
     # B19: 교통안전 문제 오답률 / B23: 표지판 기억 오류
     qs = [summ.get(q) for q in SAFETY_QS if summ.get(q) not in (None, "")]
     row["B19_교통문제_오답률"] = safe_div(sum(1 for v in qs if float(v) < 10), len(qs))
+    # B19는 복습 퀴즈(Q9~Q12, 기록형식 2부터)를 빼고 처음 배우는 문제만
+    if (summ.get("logVersion") or 1) >= 2:
+        qs = [summ.get(q) for q in SAFETY_QS if q not in ("q9", "q10", "q11", "q12") and summ.get(q) not in (None, "")]
+        row["B19_교통문제_오답률"] = safe_div(sum(1 for v in qs if float(v) < 10), len(qs))
     rec = [e[3] for e in events if e[1] == "recall_submit"]
     row["B23_표지판기억_오류"] = (3 - rec[-1]["hits"]) / 3 if rec else np.nan
+
+    # M: 복습 퀴즈 (기억력 보조 지표, 원시 기록의 review_answer 사건에서 계산)
+    rv = [e[3] for e in events if e[1] == "review_answer"]
+    items = [x for x in rv if x.get("src") not in ("", None)]
+    learned = [x for x in items if x.get("srcCorrect") == 1]
+    row["M01_복습_오답률"] = safe_div(sum(1 for x in rv if not x.get("correct")), len(rv)) if rv else np.nan
+    row["M02_기억유지_실패율"] = safe_div(sum(1 for x in learned if not x.get("correct")), len(learned)) if learned else np.nan
+    row["M03_모른다_비율"] = safe_div(sum(1 for x in rv if x.get("dk")), len(rv)) if rv else np.nan
+    row["M04_복습_반응시간"] = nan_mean([x["rtMs"] for x in rv if x.get("rtMs") is not None]) if rv else np.nan
+    q12 = [x for x in rv if x.get("q") == 12]
+    row["M05_출처기억_실패"] = (0 if q12[-1].get("correct") else 1) if q12 else np.nan
+    delays = [x["delayMs"] / 1000 for x in items if isinstance(x.get("delayMs"), (int, float))]
+    row["M06_복습까지_지연초"] = nan_mean(delays) if delays else np.nan
 
     # 응답 과정(R)·영상(V): 화면에서 이미 계산된 값
     for k in ("rp_yearTypingMs", "rp_yearDeletes", "rp_changes", "rp_profile1Ms", "rp_profile2Ms",

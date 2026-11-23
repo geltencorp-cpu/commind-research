@@ -140,10 +140,20 @@
                 justify-content: flex-start; 
                 padding-top: 50px; 
             }
-            #page-q9 .split-box {
-                flex-direction: column; /* 그림 위, 문제 아래 */
-            }
         }
+
+        /* [연구] 복습 퀴즈 표시 */
+        .review-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 18px; margin-bottom: 10px;
+            border-radius: 30px; background: #f3e8ff; color: #7b2cbf; font-family: 'Jua', sans-serif; font-size: clamp(18px, 2.2vw, 24px); }
+        @media (max-height: 700px) {
+            .review-badge { margin-bottom: 4px; padding: 4px 14px; }
+            .review-badge + i { font-size: 40px !important; margin-bottom: 6px !important; }
+        }
+        @media (max-height: 620px) {
+            .review-badge + i { display: none; }
+            #page-q9 .btn-option, #page-q10 .btn-option, #page-q11 .btn-option, #page-q12 .btn-option { margin-bottom: 8px; }
+        }
+        .btn-option.btn-dontknow { background: #f5f5f5; color: #777; border-style: dashed; }
 
         /* 5. 미디어 */
         .media-group { display: flex; flex-direction: column; gap: 10px; width: 100%; }
@@ -861,68 +871,67 @@
         </div>
     </div>
 
-    <!-- Q9 [수정] 외부 이미지 URL 사용 -->
+    <!-- Q9 [연구] 복습 퀴즈: Q4 버스 영상 -->
     <div class="slide-container" id="page-q9">
         <button class="btn-prev" onclick="app.prev('q9')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
-        <div class="split-box">
-            <!-- 왼쪽: 표지판 이미지 영역 -->
-            <div class="media-group" style="justify-content: center; align-items: center;">
-                <div style="width: min(400px, 62vw); aspect-ratio: 1; display: flex; justify-content: center; align-items: center; margin: 0 auto;">
-                    <!-- 횡단보도 표지판: 저장소에 올린 회단보도표지판.jpg 사용 -->
-                    <img src="%ED%9A%8C%EB%8B%A8%EB%B3%B4%EB%8F%84%ED%91%9C%EC%A7%80%ED%8C%90.jpg" style="width: 100%; height: 100%; object-fit: contain;" alt="횡단보도 표지판">
-                </div>
-            </div>
-            <!-- 오른쪽: 문제 및 보기 -->
-            <div class="text-area">
-                <h2>Q9. 다음 표지판은 무엇을 의미하나요?</h2>
-                <div style="width: 100%; max-width: 600px;">
-                    <button class="btn-option btn-action" onclick="app.answer(9, 10)">① 그림과 같이 신호등이 없는 횡단보도가 있음</button>
-                    <button class="btn-option btn-action" onclick="app.answer(9, 0)">② 자전거 전용 도로</button>
-                    <button class="btn-option btn-action" onclick="app.answer(9, 0)">③ 도로 공사중</button>
-                    <button class="btn-option btn-action" onclick="app.answer(9, 0)">④ 미끄러운 도로</button>
-                </div>
+        <div class="center-box">
+            <span class="review-badge"><i class="fa-solid fa-rotate-left"></i> 복습 퀴즈</span>
+            <i class="fa-solid fa-bus" style="font-size: 70px; color: #16a085; margin-bottom: 16px;"></i>
+            <h2 style="text-align: center;">Q9. 앞에서 본 <span style="color:#16a085;">버스 영상</span>을 떠올려 보세요.<br>버스에서 내릴 때는 언제 일어나라고 했나요?</h2>
+            <div style="width: 100%; max-width: 600px;">
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(9, 0)">① 내릴 정류장 안내가 나오면 바로</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(9, 10)">② 버스가 완전히 멈춘 다음</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(9, 0)">③ 문이 열리기 전에 미리</button>
+                <button class="btn-option btn-action btn-dontknow" onclick="app.reviewAnswer(9, 0, true)">④ 잘 기억나지 않아요</button>
             </div>
         </div>
     </div>
 
-    <!-- Q10 -->
+    <!-- Q10 [연구] 복습 퀴즈: Q6 골목길 영상 -->
     <div class="slide-container" id="page-q10">
         <button class="btn-prev" onclick="app.prev('q10')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
         <div class="center-box">
-            <i class="fa-solid fa-car-on" style="font-size: 80px; color: #f39c12; margin-bottom: 20px;"></i>
-            <h2 style="text-align: center;">Q10. 교차로 진입 직전(정지선 앞)에<br><span style="color:#f39c12;">황색 신호</span>가 켜졌습니다.<br>어떻게 해야 할까요?</h2>
+            <span class="review-badge"><i class="fa-solid fa-rotate-left"></i> 복습 퀴즈</span>
+            <i class="fa-solid fa-person-walking-arrow-right" style="font-size: 70px; color: #3498db; margin-bottom: 16px;"></i>
+            <h2 style="text-align: center;">Q10. 앞에서 본 <span style="color:#3498db;">골목길 영상</span>을 떠올려 보세요.<br>인도가 없을 때 어디로 걸으라고 했나요?</h2>
             <div style="width: 100%; max-width: 600px;">
-                <button class="btn-option btn-action" onclick="app.answer(10, 0)">① 속도를 높여 빠르게 통과한다</button>
-                <button class="btn-option btn-action" onclick="app.answer(10, 5)">② 천천히 서행하며 통과한다</button>
-                <button class="btn-option btn-action" onclick="app.answer(10, 10)">③ 정지선 앞에 멈춘다</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(10, 10)">① 오는 차를 마주 보는 쪽 가장자리</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(10, 0)">② 오는 차를 등지는 쪽 가장자리</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(10, 0)">③ 길 한가운데</button>
+                <button class="btn-option btn-action btn-dontknow" onclick="app.reviewAnswer(10, 0, true)">④ 잘 기억나지 않아요</button>
             </div>
         </div>
     </div>
 
-    <!-- Q11 -->
+    <!-- Q11 [연구] 복습 퀴즈: Q3 밤길 옷차림 영상 -->
     <div class="slide-container" id="page-q11">
         <button class="btn-prev" onclick="app.prev('q11')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
         <div class="center-box">
-            <i class="fa-solid fa-arrow-turn-up fa-rotate-270" style="font-size: 80px; color: #27ae60; margin-bottom: 20px;"></i>
-            <h2 style="text-align: center;">Q11. '비보호 좌회전' 표지판이<br>있는 곳입니다. 언제 좌회전하나요?</h2>
+            <span class="review-badge"><i class="fa-solid fa-rotate-left"></i> 복습 퀴즈</span>
+            <i class="fa-solid fa-shirt" style="font-size: 70px; color: #f39c12; margin-bottom: 16px;"></i>
+            <h2 style="text-align: center;">Q11. 앞에서 본 <span style="color:#f39c12;">밤길 영상</span>을 떠올려 보세요.<br>밤에 나갈 때 어떤 옷을 입으라고 했나요?</h2>
             <div style="width: 100%; max-width: 600px;">
-                <button class="btn-option btn-action" onclick="app.answer(11, 0)">① 빨간불일 때 눈치껏 한다</button>
-                <button class="btn-option btn-action" onclick="app.answer(11, 10)">② 녹색불(직진)일 때 반대편 차가 없으면</button>
-                <button class="btn-option btn-action" onclick="app.answer(11, 5)">③ 녹색 화살표 신호가 들어오면</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(11, 0)">① 어두운 색 옷</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(11, 10)">② 밝은 색이나 빛이 나는(야광) 옷</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(11, 0)">③ 두꺼운 겨울옷</button>
+                <button class="btn-option btn-action btn-dontknow" onclick="app.reviewAnswer(11, 0, true)">④ 잘 기억나지 않아요</button>
             </div>
         </div>
     </div>
 
-    <!-- Q12 -->
+    <!-- Q12 [연구] 복습 퀴즈: 출처 기억 (어떤 영상을 봤는지) -->
     <div class="slide-container" id="page-q12">
         <button class="btn-prev" onclick="app.prev('q12')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
         <div class="center-box">
-            <i class="fa-solid fa-child-reaching" style="font-size: 80px; color: #e67e22; margin-bottom: 20px;"></i>
-            <h2 style="text-align: center;">Q12. 어린이 보호구역(스쿨존)의<br>일반적인 제한 속도는?</h2>
+            <span class="review-badge"><i class="fa-solid fa-rotate-left"></i> 복습 퀴즈</span>
+            <i class="fa-solid fa-film" style="font-size: 70px; color: #8e44ad; margin-bottom: 16px;"></i>
+            <h2 style="text-align: center;">Q12. 오늘 본 영상에 <span style="color:#e74c3c;">나오지 않은</span><br>내용은 무엇일까요?</h2>
             <div style="width: 100%; max-width: 600px;">
-                <button class="btn-option btn-action" onclick="app.answer(12, 10)">① 시속 30km 이하</button>
-                <button class="btn-option btn-action" onclick="app.answer(12, 0)">② 시속 50km 이하</button>
-                <button class="btn-option btn-action" onclick="app.answer(12, 0)">③ 시속 60km 이하</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(12, 0)">① 버스에서 내리는 방법</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(12, 0)">② 밤길 옷차림</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(12, 0)">③ 골목길 걷는 방향</button>
+                <button class="btn-option btn-action" onclick="app.reviewAnswer(12, 10)">④ 자전거 탈 때 헬멧 쓰기</button>
+                <button class="btn-option btn-action btn-dontknow" onclick="app.reviewAnswer(12, 0, true)">⑤ 잘 모르겠어요</button>
             </div>
         </div>
     </div>
@@ -2076,6 +2085,9 @@
             orientation: { monthScore: 0, dayScore: 0, seasonScore: 0 },
             // 문제마다 고른 보기 번호 (원래 순서 기준 1, 2, 3 ...)
             choices: {},
+            answeredAt: {},      // [연구] 문제별 답한 시각 (복습까지 걸린 시간 계산용)
+            reviews: {},         // [연구] 복습 퀴즈 결과
+            slideShownAt: 0,
             lastOpt: '',
             // 인지 과제 결과 (memory·signal·match 는 0~1 비율, clock 은 0~10점)
             taskScores: { memory: 0, clock: 0, signal: 0, match: 0 },
@@ -2167,6 +2179,7 @@
 
             resetVariables() {
                 this.answers = { q1:0, q2:0, q3:0, q4:0, q5:0, q6:0, q7:0, q8:0, q9:0, q10:0, q11:0, q12:0 };
+                this.answeredAt = {}; this.reviews = {};
                 this.dateInput = { month: "", day: "" };
                 this.inputStep = 'month';
                 this.selectedSeason = "";
@@ -2301,19 +2314,27 @@
             },
 
             shuffleOptions() {
-                const quizPages = ['page-q1', 'page-q3', 'page-q4', 'page-q5', 'page-q6', 'page-q8', 'page-q10', 'page-q11', 'page-q12'];
+                const quizPages = ['page-q1', 'page-q3', 'page-q4', 'page-q5', 'page-q6', 'page-q8', 'page-q9', 'page-q10', 'page-q11', 'page-q12'];
                 quizPages.forEach(pageId => {
                     const page = document.getElementById(pageId);
                     if(!page) return;
                     const container = page.querySelector('.text-area') || page.querySelector('.center-box > div[style*="max-width"]') || page.querySelector('.split-box > div:not(.media-group)');
                     if(!container) return;
-                    const buttons = Array.from(container.querySelectorAll('.btn-option'));
+                    const buttons = Array.from(container.querySelectorAll('.btn-option:not(.btn-dontknow)'));
+                    const dk = container.querySelector('.btn-dontknow');
                     if(buttons.length === 0) return;
                     for (let i = buttons.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
                         [buttons[i], buttons[j]] = [buttons[j], buttons[i]];
                     }
                     buttons.forEach(btn => container.appendChild(btn));
+                    if (dk) container.appendChild(dk);
+                    // 섞은 뒤 화면의 번호(①②③…)를 위에서부터 다시 매김. 기록에는 원래 번호(data-opt)가 남음
+                    const NUM = '①②③④⑤⑥';
+                    container.querySelectorAll('.btn-option').forEach((btn, i) => {
+                        const w = document.createTreeWalker(btn, NodeFilter.SHOW_TEXT);
+                        let n; while ((n = w.nextNode())) { if (/[①-⑥]/.test(n.nodeValue)) { n.nodeValue = n.nodeValue.replace(/[①-⑥]/, NUM[i]); break; } }
+                    });
                 });
             },
 
@@ -2330,6 +2351,7 @@
                     target.classList.add('active');
                     BehaviorTracker.startTimer();
                     ResearchLog.slide(id);
+                    this.slideShownAt = performance.now();
                     const tasks = { memo: MemoTask, q13: ClockTask, q14: SignalTask, q15: MatchTask, q16: RecallTask,
                         profile1: { enter: () => Profile.enter('profile1') }, profile2: { enter: () => Profile.enter('profile2') } };
                     if (tasks[id]) tasks[id].enter();
@@ -2368,6 +2390,7 @@
                 // 반응 시간은 영상이 없는 문제(Q9~Q12)에서만 측정 (영상 시청 시간이 섞이지 않도록)
                 if (qNum >= 9 && qNum <= 12) BehaviorTracker.recordReaction();
                 this.answers['q' + qNum] = score;
+                this.answeredAt['q' + qNum] = Date.now();
                 this.choices['q' + qNum] = this.lastOpt || '';
                 const video = VideoSound.snapshot();
                 if (video) { video.q = qNum; this.videoAnswers['q' + qNum] = video; }
@@ -2378,6 +2401,44 @@
                     this.goToSlide('loading');
                     setTimeout(() => this.calcResult(), 2000);
                 }
+            },
+
+            // [연구] 복습 퀴즈 (Q9~Q12): 앞 영상 내용을 기억하는지. 원래 문제(배운 것)와 짝지어 기록
+            REVIEW_SRC: { 9: 4, 10: 6, 11: 3, 12: null },
+            reviewAnswer(qNum, score, dontKnow) {
+                const src = this.REVIEW_SRC[qNum];
+                const srcKey = src ? 'q' + src : null;
+                const rec = {
+                    q: qNum, src: src || '', correct: score >= 10 ? 1 : 0, dk: dontKnow ? 1 : 0, opt: this.lastOpt || '',
+                    rtMs: Math.round(performance.now() - this.slideShownAt),
+                    srcCorrect: srcKey && this.answeredAt[srcKey] ? (this.answers[srcKey] >= 10 ? 1 : 0) : '',
+                    delayMs: srcKey && this.answeredAt[srcKey] ? Date.now() - this.answeredAt[srcKey] : ''
+                };
+                this.reviews['q' + qNum] = rec;
+                ResearchLog.event('review_answer', rec);
+                this.answer(qNum, score);
+            },
+
+            // [연구] 복습 퀴즈 요약: 맞힌 수, 모른다 수, 반응시간, 배운 것 유지율, 출처 기억
+            reviewSummary() {
+                const all = Object.values(this.reviews || {});
+                const items = all.filter(r => r.src !== '');
+                const learned = items.filter(r => r.srcCorrect === 1);
+                const mean = (a) => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : '';
+                const q12 = this.reviews.q12;
+                return {
+                    rv_n: all.length,
+                    rv_correct: all.filter(r => r.correct).length,
+                    rv_dontKnow: all.filter(r => r.dk).length,
+                    rv_rtMean: mean(all.map(r => r.rtMs)),
+                    rv_rtCorrectMean: mean(all.filter(r => r.correct).map(r => r.rtMs)),
+                    rv_learned: learned.length,
+                    rv_retained: learned.filter(r => r.correct).length,
+                    rv_retention: learned.length ? Math.round(learned.filter(r => r.correct).length / learned.length * 100) / 100 : '',
+                    rv_delaySec: mean(items.filter(r => r.delayMs !== '').map(r => r.delayMs / 1000)),
+                    rv_sourceOk: q12 ? q12.correct : '',
+                    rv_detail: all.map(r => `q${r.q}:${r.dk ? 'DK' : r.correct}`).join(',')
+                };
             },
 
             selectSeason(season) {
@@ -2511,10 +2572,10 @@
                 if(this.answers.q5 < 10) sHtml += this.createCard('correction', 'fa-hand', '#c0392b', 'Q. 무단횡단 해도 될까?', '정답: 꼭 횡단보도로 건너세요.', '조금 빠르려다 크게 다칠 수 있습니다.');
                 if(this.answers.q6 < 10) sHtml += this.createCard('correction', 'fa-person-walking-arrow-right', '#3498db', 'Q. 골목길 보행 방향은?', '정답: 차와 마주 보고 걷습니다.', '뒤에서 오는 차는 피할 수 없습니다.');
                 if(this.answers.q8 < 10) sHtml += this.createCard('correction', 'fa-person-walking', '#8e44ad', 'Q. 신호가 5초 남았을 때는?', '정답: 다음 신호를 기다립니다.', '시간이 모자란 신호에 서두르면 넘어지거나 차와 부딪힐 수 있습니다.');
-                if(this.answers.q9 < 10) sHtml += this.createCard('correction', 'fa-signs-post', '#0d6efd', 'Q. 파란 표지판의 뜻은?', '정답: 횡단보도가 있다는 표지입니다.', '이 표지판이 있는 곳에서 길을 건너야 안전합니다.');
-                if(this.answers.q10 < 10) sHtml += this.createCard('correction', 'fa-car', '#e67e22', 'Q. 교차로 앞 황색 신호?', '정답: 정지선 앞에 멈춥니다.', '가속하면 딜레마 존 사고 위험이 있습니다.');
-                if(this.answers.q11 < 10) sHtml += this.createCard('correction', 'fa-arrow-turn-up', '#27ae60', 'Q. 비보호 좌회전은 언제?', '정답: 녹색(직진) 신호일 때만!', '적색 신호 진입은 신호위반입니다.');
-                if(this.answers.q12 < 10) sHtml += this.createCard('correction', 'fa-child', '#f1c40f', 'Q. 스쿨존 제한 속도는?', '정답: 시속 30km 이하입니다.', '어린이는 언제 튀어나올지 모릅니다.');
+                if(this.answers.q9 < 10) sHtml += this.createCard('correction', 'fa-bus', '#16a085', '복습: 버스에서 내릴 때', '정답: 버스가 완전히 멈춘 다음 일어납니다.', '영상에서 배운 내용을 한 번 더 떠올려 보세요.');
+                if(this.answers.q10 < 10) sHtml += this.createCard('correction', 'fa-person-walking-arrow-right', '#3498db', '복습: 골목길 걷는 방향', '정답: 오는 차를 마주 보는 쪽 가장자리로 걷습니다.', '차가 오는 것을 직접 보며 피할 수 있습니다.');
+                if(this.answers.q11 < 10) sHtml += this.createCard('correction', 'fa-shirt', '#f39c12', '복습: 밤길 옷차림', '정답: 밝은 색이나 빛이 나는 옷을 입습니다.', '운전자가 멀리서도 알아볼 수 있습니다.');
+                if(this.answers.q12 < 10) sHtml += this.createCard('correction', 'fa-film', '#8e44ad', '복습: 오늘 본 영상', '오늘은 신호등, 밤길 옷차림, 버스, 횡단보도, 골목길 영상을 봤어요.', '자전거 헬멧 이야기는 나오지 않았어요.');
 
                 if(sHtml === "") sHtml = this.createCard('activity', 'fa-thumbs-up', '#27ae60', '완벽해요', '틀린 문제가 하나도 없네요.<br>정말 훌륭합니다!', '');
                 sGrid.innerHTML = sHtml;
@@ -2714,9 +2775,10 @@
                     ...Profile.summary(),
                     ...this.signalRTSummary(),
                     ...this.videoSummary(),
+                    ...this.reviewSummary(),
                     sensorMotion: ResearchLog.peek() && ResearchLog.peek().motionSeen ? 1 : 0,
                     sensorPermission: ResearchLog.peek() ? ResearchLog.peek().sensorPermission : '',
-                    logVersion: 1
+                    logVersion: 2
                 };
             },
 
