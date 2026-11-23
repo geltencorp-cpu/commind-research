@@ -100,7 +100,11 @@ var COLUMNS = [
   ['답할 때까지 본 비율 평균(%)', 'vid_watchPct'],
   ['영상 끝난 뒤 답까지 평균(ms)', 'vid_afterEndMs'],
   ['끝나기 전 답한 문제', 'vid_earlyList'],
-  // ----- [연구] 복습 퀴즈 (Q9~Q12, 기억력 보조 지표) -----
+  // ----- [연구] 센서 -----
+  ['움직임 센서 수집', 'sensorMotion'],
+  ['센서 허락', 'sensorPermission'],
+  ['기록 형식 버전', 'logVersion'],
+  // ----- [연구] 복습 퀴즈 (Q9~Q12, 기억력 보조 지표). 예전 줄과 칸이 어긋나지 않도록 맨 뒤에 둠 -----
   ['복습 문제 수', 'rv_n'],
   ['복습 맞힌 수', 'rv_correct'],
   ['복습 기억안남 선택 수', 'rv_dontKnow'],
@@ -111,11 +115,7 @@ var COLUMNS = [
   ['기억 유지율', 'rv_retention'],
   ['배운 뒤 복습까지 평균(초)', 'rv_delaySec'],
   ['출처 기억(Q12) 맞힘', 'rv_sourceOk'],
-  ['복습 문제별 결과', 'rv_detail'],
-  // ----- [연구] 센서 -----
-  ['움직임 센서 수집', 'sensorMotion'],
-  ['센서 허락', 'sensorPermission'],
-  ['기록 형식 버전', 'logVersion']
+  ['복습 문제별 결과', 'rv_detail']
 ];
 
 // [연구] 원시 행동 기록을 저장할 드라이브 폴더 이름
