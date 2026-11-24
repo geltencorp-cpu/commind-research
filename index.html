@@ -1045,7 +1045,7 @@
         <button class="btn-prev" onclick="app.prev('q16')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
         <div class="task-box">
             <h2 id="card-title">Q16. 표지판 <span style="color:#e74c3c;">6장</span>의 자리를 기억하세요</h2>
-            <div class="card-ask" id="card-ask"><span id="card-guide" class="task-guide">카드를 10초 동안 보여 드려요. 어떤 표지판이 <b>어디</b> 있는지 잘 봐 두세요.</span></div>
+            <div class="card-ask" id="card-ask"><span id="card-guide" class="task-guide">카드를 15초 동안 보여 드려요. 어떤 표지판이 <b>어디</b> 있는지 잘 봐 두세요.</span></div>
             <div class="card-grid" id="card-grid"></div>
             <div class="card-tip" id="card-tip"></div>
             <button id="card-start" class="btn-start btn-action task-btn" onclick="CardTask.begin()">시작</button>
@@ -1520,7 +1520,7 @@
                 slow: '천천히 표지판 근처는 위험한 곳이에요. 걸을 때도 주위를 살펴요.',
                 noparking: '세워 둔 차 사이로 갑자기 나오지 마세요. 운전자가 보지 못해요.'
             },
-            STUDY_MS: 10000, ASKS: 4, SHOW_MS: 3500, COLS: 3,
+            STUDY_MS: 15000, ASKS: 4, SHOW_MS: 3500, COLS: 3,
             timers: [], layout: [], asks: [], qi: 0, awaiting: false, askAt: 0, results: [],
             el(id) { return document.getElementById(id); },
             later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
@@ -1542,7 +1542,7 @@
                 this.stop();
                 this.layout = shuffled(this.KEYS); this.results = []; this.qi = 0;
                 this.el('card-title').innerHTML = 'Q16. 표지판 <span style="color:#e74c3c;">6장</span>의 자리를 기억하세요';
-                this.el('card-ask').innerHTML = '<span class="task-guide">카드를 10초 동안 보여 드려요. 어떤 표지판이 <b>어디</b> 있는지 잘 봐 두세요.</span>';
+                this.el('card-ask').innerHTML = '<span class="task-guide">카드를 15초 동안 보여 드려요. 어떤 표지판이 <b>어디</b> 있는지 잘 봐 두세요.</span>';
                 this.el('card-tip').innerText = ''; this.el('card-tip').className = 'card-tip';
                 this.el('card-start').style.display = '';
                 this.el('card-grid').innerHTML = this.KEYS.map(() => '<div class="card back">?</div>').join('');
