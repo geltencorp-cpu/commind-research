@@ -221,6 +221,14 @@
         .signal-msg.bad { color: #ffd0cc; }
         .btn-cross { font-family: 'Jua', sans-serif; font-size: clamp(28px, 4vw, 40px); padding: 18px 70px; border-radius: 50px; border: none; background: #ffaa00; color: #fff; box-shadow: 0 6px 0 #d48806; cursor: pointer; touch-action: manipulation; }
         .btn-cross:active { transform: translateY(6px); box-shadow: none; }
+        /* [연구] Q17 1-back */
+        .nb-card { width: clamp(150px, 26vh, 230px); height: clamp(150px, 26vh, 230px); border-radius: 28px; background: #fff; border: 5px solid #dfe6e9; display: flex; align-items: center; justify-content: center; font-size: clamp(80px, 15vh, 140px); line-height: 1; color: #34495e; }
+        .nb-card.memo { border-color: #ffaa00; }
+        .btn-nb { font-family: 'Jua', sans-serif; font-size: clamp(26px, 3.6vw, 38px); padding: 16px 46px; border-radius: 50px; border: none; color: #fff; cursor: pointer; touch-action: manipulation; }
+        .btn-nb.same { background: #27ae60; box-shadow: 0 6px 0 #1e8449; }
+        .btn-nb.diff { background: #e67e22; box-shadow: 0 6px 0 #ca6f1e; }
+        .btn-nb:active { transform: translateY(6px); box-shadow: none; }
+        .nb-btns.wait .btn-nb { opacity: .45; }
 
         .match-area { position: relative; display: flex; flex-direction: column; gap: clamp(70px, 13vh, 130px); width: 100%; max-width: 900px; }
         .match-col { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(8px, 2vw, 24px); position: relative; z-index: 2; }
@@ -1001,6 +1009,45 @@
         </div>
     </div>
 
+    <!-- [연구] Q17 기억력: 1-back (바로 앞 그림과 같은지) -->
+    <div class="slide-container" id="page-q17">
+        <button class="btn-prev" onclick="app.prev('q17')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="task-box">
+            <h2>Q17. <span style="color:#e74c3c;">바로 앞</span>에 본 그림과 같나요?</h2>
+            <p class="task-guide" id="nb-guide">그림이 하나씩 나와요. 바로 앞 그림과 <b style="color:#27ae60;">같으면 [같아요]</b>,<br><b style="color:#d35400;">다르면 [달라요]</b>를 눌러 주세요.</p>
+            <div class="nb-card" id="nb-card"></div>
+            <div class="task-guide" id="nb-count" style="color:#555;"></div>
+            <button id="nb-start" class="btn-start btn-action task-btn" onclick="NBackTask.begin()">시작</button>
+            <div class="task-btn-row nb-btns" id="nb-btns" style="display:none;">
+                <button class="btn-nb same" onpointerdown="NBackTask.respond('same', event)">같아요</button>
+                <button class="btn-nb diff" onpointerdown="NBackTask.respond('diff', event)">달라요</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- [연구] Q18 집중력: 신호등 2회차 (처음과 비교해 끝까지 집중이 유지되는지) -->
+    <div class="slide-container" id="page-q18">
+        <button class="btn-prev" onclick="app.prev('q18')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
+        <div class="task-box">
+            <h2>Q18. 마지막으로 한 번 더! <span style="color:#27ae60;">초록불</span>일 때만 건너요</h2>
+            <p class="task-guide">초록불이 켜지면 <span style="color:#d35400;">[건너기]</span>를 누르고,<br>빨간불이면 누르지 말고 기다리세요.</p>
+            <div class="signal-stage">
+                <div class="signal-light">
+                    <span id="lamp-red-2" class="lamp red"><i class="fa-solid fa-person"></i></span>
+                    <span id="lamp-green-2" class="lamp green"><i class="fa-solid fa-person-walking"></i></span>
+                </div>
+                <div class="signal-scene">
+                    <div class="zebra"></div>
+                    <div class="walkers" id="signal-walkers-2">🚶‍♀️🚶‍♂️🚶‍♀️</div>
+                    <div class="signal-msg" id="signal-msg-2"></div>
+                </div>
+            </div>
+            <div class="task-guide" id="signal-count-2" style="color:#555;"></div>
+            <button id="signal-start-2" class="btn-start btn-action task-btn" onclick="SignalTask.begin()">시작</button>
+            <button id="signal-press-2" class="btn-cross" style="display:none;" onpointerdown="SignalTask.press(event)">건너기</button>
+        </div>
+    </div>
+
     <!-- Loading -->
     <div class="slide-container" id="page-loading">
         <div class="center-box">
@@ -1608,7 +1655,8 @@
         const SignalTask = {
             TOTAL: 10, GREENS: 6, LIGHT_MS: 2200, GAP_MS: 1000,
             timers: [], running: false, seq: [], trial: -1, lightOn: false, pressed: false, stats: null, rts: [], onAt: 0, paintAt: 0,
-            el(id) { return document.getElementById(id); },
+            round: 1, sfx: '',
+            el(id) { return document.getElementById(id + this.sfx); },
             later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
             stop() {
                 this.timers.forEach(clearTimeout);
@@ -1622,8 +1670,10 @@
                 const m = this.el('signal-msg');
                 m.innerText = text; m.classList.toggle('bad', !!bad);
             },
-            enter() {
+            // round 1 = Q14, round 2 = Q18 (검사 끝에 한 번 더: 처음보다 느려지거나 놓치면 집중력 저하)
+            enter(round) {
                 this.stop();
+                this.round = round === 2 ? 2 : 1; this.sfx = this.round === 2 ? '-2' : '';
                 this.setLamp(null); this.say('');
                 this.el('signal-walkers').classList.remove('go');
                 this.el('signal-count').innerText = '';
@@ -1637,7 +1687,7 @@
                 this.seq = shuffled(base);
                 this.stats = { correct: 0, commission: 0, omission: 0, presses: 0, extraPresses: 0 };
                 this.rts = []; this.onAt = 0; this.paintAt = 0;
-                ResearchLog.event('signal_begin', { seq: this.seq.slice(), lightMs: this.LIGHT_MS, gapMs: this.GAP_MS });
+                ResearchLog.event('signal_begin', { round: this.round, seq: this.seq.slice(), lightMs: this.LIGHT_MS, gapMs: this.GAP_MS });
                 this.running = true;
                 this.el('signal-start').style.display = 'none';
                 this.el('signal-press').style.display = '';
@@ -1652,9 +1702,9 @@
                 this.setLamp(this.seq[i]);
                 this.onAt = performance.now();
                 const trial = i, color = this.seq[i];
-                ResearchLog.event('signal_on', { trial, color }, this.onAt);
+                ResearchLog.event('signal_on', { round: this.round, trial, color }, this.onAt);
                 // 불이 실제로 화면에 그려진 시각 (다음 프레임)
-                requestAnimationFrame((ts) => { if (this.trial === trial) { this.paintAt = ts; ResearchLog.event('signal_paint', { trial }, ts); } });
+                requestAnimationFrame((ts) => { if (this.trial === trial) { this.paintAt = ts; ResearchLog.event('signal_paint', { round: this.round, trial }, ts); } });
                 this.el('signal-count').innerText = `${i + 1} / ${this.TOTAL}`;
                 this.later(() => this.endTrial(), this.LIGHT_MS);
             },
@@ -1663,7 +1713,7 @@
                 const at = (e && e.timeStamp) ? e.timeStamp : performance.now();
                 const base = this.paintAt && this.paintAt >= this.onAt ? this.paintAt : this.onAt;
                 const rt = this.lightOn ? Math.round((at - base) * 10) / 10 : null;
-                ResearchLog.event('signal_press', { trial: this.trial, color: this.seq[this.trial], lightOn: this.lightOn, first: this.lightOn && !this.pressed, rt }, at);
+                ResearchLog.event('signal_press', { round: this.round, trial: this.trial, color: this.seq[this.trial], lightOn: this.lightOn, first: this.lightOn && !this.pressed, rt }, at);
                 if (this.lightOn && !this.pressed) this.rts.push({ trial: this.trial, color: this.seq[this.trial], rt });
                 // 누른 횟수는 모두 기록. 같은 신호에 두 번 이상 누르거나 불이 꺼졌을 때 누르면 '불필요한 누름'
                 this.stats.presses++;
@@ -1680,7 +1730,7 @@
             },
             endTrial() {
                 this.lightOn = false;
-                ResearchLog.event('signal_off', { trial: this.trial, color: this.seq[this.trial], pressed: this.pressed });
+                ResearchLog.event('signal_off', { round: this.round, trial: this.trial, color: this.seq[this.trial], pressed: this.pressed });
                 this.setLamp(null);
                 if (!this.pressed) {
                     if (this.seq[this.trial] === 'green') { this.stats.omission++; this.say('초록불을 놓쳤어요', true); }
@@ -1692,11 +1742,103 @@
                 this.running = false;
                 this.el('signal-press').style.display = 'none';
                 this.say('끝났습니다. 수고하셨어요!');
+                ResearchLog.event('signal_end', Object.assign({ round: this.round }, this.stats));
+                if (this.round === 2) {
+                    // 2회차는 연구용 기록만 (앱 리포트 점수는 1회차 그대로)
+                    app.signalStats2 = this.stats;
+                    app.signalRTs2 = this.rts.slice();
+                    this.later(() => app.finishTask(18), 1200);
+                    return;
+                }
                 app.taskScores.signal = this.stats.correct / this.TOTAL;
                 app.signalStats = this.stats;
                 app.signalRTs = this.rts.slice();
-                ResearchLog.event('signal_end', Object.assign({}, this.stats));
                 this.later(() => app.finishTask(14), 1200);
+            }
+        };
+
+
+        // [연구] 기억력 과제 (Q17): 1-back. 그림이 하나씩 나오고, 바로 앞 그림과 같은지 답함 (코그메이트 One Back과 같은 구조)
+        const NBackTask = {
+            ICONS: ['🚌', '🚗', '🚲', '🛵'],   // 인터넷 글꼴 없이도 보이도록 그림 문자 사용
+            ITEMS: 13, TARGETS: 5, MEMO_MS: 2000, BLANK_MS: 500, TIMEOUT_MS: 8000,
+            timers: [], seq: [], i: 0, awaiting: false, shownAt: 0, paintAt: 0, results: [],
+            el(id) { return document.getElementById(id); },
+            later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+            stop() { this.timers.forEach(clearTimeout); this.timers = []; this.awaiting = false; },
+            show(icon, memo) {
+                const c = this.el('nb-card');
+                c.classList.toggle('memo', !!memo);
+                c.textContent = icon || '';
+            },
+            makeSeq() {
+                // 2번째 그림부터 12번 판단, 그중 5번이 '같아요'
+                const tg = shuffled(Array.from({ length: this.ITEMS - 1 }, (_, k) => k < this.TARGETS));
+                const seq = [this.ICONS[Math.floor(Math.random() * this.ICONS.length)]];
+                tg.forEach(t => {
+                    const prev = seq[seq.length - 1];
+                    seq.push(t ? prev : shuffled(this.ICONS.filter(x => x !== prev))[0]);
+                });
+                return seq;
+            },
+            enter() {
+                this.stop();
+                this.show(null);
+                this.el('nb-count').innerText = '';
+                this.el('nb-start').style.display = '';
+                this.el('nb-btns').style.display = 'none';
+                this.el('nb-guide').style.display = '';
+            },
+            begin() {
+                this.stop();
+                this.seq = this.makeSeq(); this.results = []; this.i = 0;
+                ResearchLog.event('nback_begin', { seq: this.seq.slice(), memoMs: this.MEMO_MS, blankMs: this.BLANK_MS, timeoutMs: this.TIMEOUT_MS });
+                this.el('nb-start').style.display = 'none';
+                this.el('nb-btns').style.display = '';
+                this.el('nb-btns').classList.add('wait');
+                this.show(this.seq[0], true);
+                this.el('nb-count').innerText = '첫 그림이에요. 잘 봐 두세요';
+                ResearchLog.event('nback_item', { i: 0, icon: this.seq[0], target: null });
+                this.later(() => this.blank(1), this.MEMO_MS);
+            },
+            blank(next) {
+                this.awaiting = false;
+                this.show(null);
+                this.el('nb-btns').classList.add('wait');
+                if (next >= this.seq.length) return this.finish();
+                this.later(() => this.item(next), this.BLANK_MS);
+            },
+            item(i) {
+                this.i = i;
+                const target = this.seq[i] === this.seq[i - 1];
+                this.show(this.seq[i]);
+                this.el('nb-count').innerText = `${i} / ${this.seq.length - 1}`;
+                this.el('nb-btns').classList.remove('wait');
+                this.shownAt = performance.now(); this.paintAt = 0;
+                ResearchLog.event('nback_item', { i, icon: this.seq[i], target }, this.shownAt);
+                requestAnimationFrame((ts) => { if (this.i === i) this.paintAt = ts; });
+                this.awaiting = true;
+                this.later(() => this.respond(null), this.TIMEOUT_MS);
+            },
+            respond(resp, e) {
+                if (!this.awaiting) return;
+                this.awaiting = false;
+                this.timers.forEach(clearTimeout); this.timers = [];
+                const at = (e && e.timeStamp) ? e.timeStamp : performance.now();
+                const base = this.paintAt && this.paintAt >= this.shownAt ? this.paintAt : this.shownAt;
+                const target = this.seq[this.i] === this.seq[this.i - 1];
+                const r = { i: this.i, target, resp, correct: resp === null ? false : ((resp === 'same') === target),
+                    rt: resp === null ? null : Math.round((at - base) * 10) / 10 };
+                this.results.push(r);
+                ResearchLog.event('nback_resp', r, at);
+                this.blank(this.i + 1);
+            },
+            finish() {
+                this.el('nb-btns').style.display = 'none';
+                this.el('nb-count').innerText = '끝났습니다. 수고하셨어요!';
+                app.nbackResults = this.results.slice();
+                ResearchLog.event('nback_end', { n: this.results.length, correct: this.results.filter(r => r.correct).length });
+                this.later(() => app.finishTask(17), 1200);
             }
         };
 
@@ -2077,7 +2219,7 @@
 
         const app = {
             answers: { q1:0, q2:0, q3:0, q4:0, q5:0, q6:0, q7:0, q8:0, q9:0, q10:0, q11:0, q12:0 },
-            totalSlides: 16,
+            totalSlides: 18,
             dateInput: { month: "", day: "" },
             inputStep: 'month',
             selectedSeason: "",
@@ -2191,6 +2333,7 @@
                 this.taskScores = { memory: 0, clock: 0, signal: 0, match: 0 };
                 this.signalStats = { correct: 0, commission: 0, omission: 0, presses: 0, extraPresses: 0 };
                 this.signalRTs = [];
+                this.signalStats2 = null; this.signalRTs2 = []; this.nbackResults = [];
                 this.videoAnswers = {};
                 Profile.reset();
                 this.reportData = null; // 초기화
@@ -2341,6 +2484,7 @@
             goToSlide(id) {
                 VideoSound.detach();
                 SignalTask.stop();
+                NBackTask.stop();
                 document.querySelectorAll('.slide-container').forEach(el => {
                     el.classList.remove('active');
                     const iframe = el.querySelector('iframe');
@@ -2352,7 +2496,8 @@
                     BehaviorTracker.startTimer();
                     ResearchLog.slide(id);
                     this.slideShownAt = performance.now();
-                    const tasks = { memo: MemoTask, q13: ClockTask, q14: SignalTask, q15: MatchTask, q16: RecallTask,
+                    const tasks = { memo: MemoTask, q13: ClockTask, q14: { enter: () => SignalTask.enter(1) }, q15: MatchTask, q16: RecallTask,
+                        q17: NBackTask, q18: { enter: () => SignalTask.enter(2) },
                         profile1: { enter: () => Profile.enter('profile1') }, profile2: { enter: () => Profile.enter('profile2') } };
                     if (tasks[id]) tasks[id].enter();
                     const iframe = target.querySelector('iframe');
@@ -2776,9 +2921,11 @@
                     ...this.signalRTSummary(),
                     ...this.videoSummary(),
                     ...this.reviewSummary(),
+                    ...this.nbackSummary(),
+                    ...this.signalRound2Summary(),
                     sensorMotion: ResearchLog.peek() && ResearchLog.peek().motionSeen ? 1 : 0,
                     sensorPermission: ResearchLog.peek() ? ResearchLog.peek().sensorPermission : '',
-                    logVersion: 2
+                    logVersion: 3
                 };
             },
 
@@ -2796,6 +2943,41 @@
                     vid_watchPct: mean(played.map(v => v.pct)),           // 답할 때까지 본 비율 평균 (%)
                     vid_afterEndMs: mean(after),                         // 영상이 끝난 뒤 답하기까지 평균 (ms)
                     vid_earlyList: early.map(v => v.q || '').join(',')
+                };
+            },
+
+            // [연구] Q17 1-back 요약
+            nbackSummary() {
+                const r = this.nbackResults || [];
+                if (!r.length) return {};
+                const mean = (a) => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : '';
+                const tg = r.filter(x => x.target), nt = r.filter(x => !x.target);
+                return {
+                    nb_n: r.length,
+                    nb_correct: r.filter(x => x.correct).length,
+                    nb_errRate: Math.round(r.filter(x => !x.correct).length / r.length * 1000) / 1000,
+                    nb_missSame: tg.filter(x => x.resp !== 'same').length,       // 같은데 '달라요' 또는 무응답
+                    nb_falseSame: nt.filter(x => x.resp === 'same').length,      // 다른데 '같아요'
+                    nb_timeout: r.filter(x => x.resp === null).length,
+                    nb_rtMean: mean(r.filter(x => x.rt !== null).map(x => x.rt)),
+                    nb_rtCorrectMean: mean(r.filter(x => x.correct && x.rt !== null).map(x => x.rt))
+                };
+            },
+
+            // [연구] Q18 신호등 2회차 요약 + 1회차 대비 변화 (반응 저하)
+            signalRound2Summary() {
+                const s2 = this.signalStats2;
+                if (!s2) return {};
+                const go = (this.signalRTs2 || []).filter(r => r.color === 'green' && r.rt !== null).map(r => r.rt);
+                const go1 = (this.signalRTs || []).filter(r => r.color === 'green' && r.rt !== null).map(r => r.rt);
+                const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+                const sd = (a) => { if (a.length < 2) return null; const m = mean(a); return Math.sqrt(a.reduce((x, y) => x + (y - m) * (y - m), 0) / (a.length - 1)); };
+                const m1 = mean(go1), m2 = mean(go);
+                return {
+                    sig2_goRtMean: m2 === null ? '' : Math.round(m2), sig2_goRtSd: sd(go) === null ? '' : Math.round(sd(go)), sig2_goN: go.length,
+                    sig2_omission: s2.omission, sig2_commission: s2.commission,
+                    sig_rtDrift: (m1 && m2) ? Math.round(m2 / m1 * 1000) / 1000 : '',          // 2회차 ÷ 1회차 반응시간 (1보다 크면 느려짐)
+                    sig_omissionDrift: s2.omission - (this.signalStats ? this.signalStats.omission : 0)   // 놓침 증가 수
                 };
             },
 

@@ -262,13 +262,13 @@ def timing_features(events, spans, duration):
 
     # B04: 인지 과제(Q13~Q16) 화면별 소요 시간
     for s, t0, t1 in spans:
-        if s in ("q13", "q15", "q16"):
-            out[f"B04_{s}_소요_s"] = (t1 - t0) / 1000
+        if s in ("q7", "q13", "q15", "q16", "q17"):
+            out[f"B04_{s}_소요_s"] = (t1 - t0) / 1000   # q7 날짜 답한 시간, q13 시계 그린 시간, q15 선 잇는 시간
     # B05·B06: 머뭇거림 (영상·신호등·로딩·결과 화면 제외)
     gaps = []
     total_s = 0.0
     for s, t0, t1 in spans:
-        if s in VIDEO_SLIDES or s in ("q14", "loading", "result", "start") or t1 - t0 < 500:
+        if s in VIDEO_SLIDES or s in ("q14", "q17", "q18", "loading", "result", "start") or t1 - t0 < 500:
             continue
         ts = [t0] + sorted(taps_by_slide.get(s, [])) + [t1]
         total_s += (t1 - t0) / 1000
@@ -282,11 +282,64 @@ def timing_features(events, spans, duration):
 
 
 # ---------------------------------------------------------------- 신호등
+def signal_trials(events, rnd):
+    """신호등 시행 목록. rnd=1 은 Q14, rnd=2 는 Q18 (기록형식 3부터; 그 전 기록은 모두 1회차)"""
+    trials = {}
+    for e in events:
+        d = e[3] if isinstance(e[3], dict) else {}
+        if not e[1].startswith("signal_") or (d.get("round") or 1) != rnd:
+            continue
+        if e[1] == "signal_on":
+            trials[d["trial"]] = {"color": d["color"], "on": e[0], "press": None, "rt": None, "extra": 0}
+        elif e[1] == "signal_press" and d.get("trial") in trials:
+            tr = trials[d["trial"]]
+            if d.get("first") and d.get("lightOn"):
+                tr["press"], tr["rt"] = e[0], d.get("rt")
+            else:
+                tr["extra"] += 1
+    return [trials[k] for k in sorted(trials)]
+
+
+def signal_drift(events):
+    """D: 집중력 유지. 검사 끝(Q18)의 신호등이 처음(Q14)보다 얼마나 나빠졌는지"""
+    a, b = signal_trials(events, 1), signal_trials(events, 2)
+    if not a or not b:
+        return {}
+    def stat(order):
+        go = [t["rt"] for t in order if t["color"] == "green" and t["rt"] is not None]
+        ng = sum(1 for t in order if t["color"] == "green")
+        return nan_mean(go), (safe_div(nan_sd(go), nan_mean(go)) if len(go) >= 2 else np.nan), \
+            safe_div(sum(1 for t in order if t["color"] == "green" and t["press"] is None), ng)
+    rt1, cv1, om1 = stat(a)
+    rt2, cv2, om2 = stat(b)
+    return {"D01_반응저하비_2회차대1회차": safe_div(rt2, rt1),
+            "D02_놓침률증가_2회차-1회차": om2 - om1 if not (np.isnan(om1) or np.isnan(om2)) else np.nan,
+            "D03_변동계수증가_2회차-1회차": cv2 - cv1 if not (np.isnan(cv1) or np.isnan(cv2)) else np.nan,
+            "D04_2회차_반응시간_ms": rt2}
+
+
+def nback_features(events):
+    """N: Q17 1-back (바로 앞 그림과 같은지)"""
+    rs = [e[3] for e in events if e[1] == "nback_resp" and isinstance(e[3], dict)]
+    if not rs:
+        return {}
+    tg = [r for r in rs if r.get("target")]
+    nt = [r for r in rs if not r.get("target")]
+    rt = [r["rt"] for r in rs if r.get("rt") is not None]
+    return {"N01_1back_오답률": safe_div(sum(1 for r in rs if not r.get("correct")), len(rs)),
+            "N02_1back_같음놓침률": safe_div(sum(1 for r in tg if r.get("resp") != "same"), len(tg)) if tg else np.nan,
+            "N03_1back_잘못같음률": safe_div(sum(1 for r in nt if r.get("resp") == "same"), len(nt)) if nt else np.nan,
+            "N04_1back_반응시간_ms": nan_mean(rt) if rt else np.nan,
+            "N05_1back_반응변동계수": safe_div(nan_sd(rt), nan_mean(rt)) if len(rt) >= 2 else np.nan}
+
+
 def signal_features(events, tilt):
     out = {}
     trials = {}
     for e in events:
         d = e[3] if isinstance(e[3], dict) else {}
+        if (d.get("round") or 1) != 1:
+            continue
         if e[1] == "signal_on":
             trials[d["trial"]] = {"color": d["color"], "on": e[0], "press": None, "rt": None, "extra": 0}
         elif e[1] == "signal_press" and d.get("trial") in trials:
@@ -316,7 +369,7 @@ def signal_features(events, tilt):
     if errs:
         after = []
         for t in errs:
-            n = sum(1 for e in events if e[1] == "signal_press" and 0 < e[0] - t["press"] <= 3000)
+            n = sum(1 for e in events if e[1] == "signal_press" and (e[3].get("round") or 1) == 1 and 0 < e[0] - t["press"] <= 3000)
             after.append(n)
         out["C04_오류직후_재누름"] = nan_mean(after)
         if tilt is not None:
@@ -379,6 +432,8 @@ def extract(path):
     row["센서_수집"] = tilt is not None
 
     row.update(signal_features(events, tilt))
+    row.update(signal_drift(events))
+    row.update(nback_features(events))
     row.update(timing_features(events, spans, duration))
     row.update(touch_features(touch, taps))
     row.update(drag_features(touch))

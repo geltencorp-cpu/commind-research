@@ -115,7 +115,24 @@ var COLUMNS = [
   ['기억 유지율', 'rv_retention'],
   ['배운 뒤 복습까지 평균(초)', 'rv_delaySec'],
   ['출처 기억(Q12) 맞힘', 'rv_sourceOk'],
-  ['복습 문제별 결과', 'rv_detail']
+  ['복습 문제별 결과', 'rv_detail'],
+  // ----- [연구] Q17 1-back (기억력 주요 지표, 기록형식 3) -----
+  ['1-back 판단 수', 'nb_n'],
+  ['1-back 맞힌 수', 'nb_correct'],
+  ['1-back 오답률', 'nb_errRate'],
+  ['1-back 같은데 놓침', 'nb_missSame'],
+  ['1-back 다른데 같다고 함', 'nb_falseSame'],
+  ['1-back 무응답', 'nb_timeout'],
+  ['1-back 반응 평균(ms)', 'nb_rtMean'],
+  ['1-back 맞힌 반응 평균(ms)', 'nb_rtCorrectMean'],
+  // ----- [연구] Q18 신호등 2회차 (집중력: 처음보다 느려지거나 놓치는지) -----
+  ['신호등2 초록 반응 평균(ms)', 'sig2_goRtMean'],
+  ['신호등2 초록 반응 표준편차(ms)', 'sig2_goRtSd'],
+  ['신호등2 초록 반응 수', 'sig2_goN'],
+  ['신호등2 놓침', 'sig2_omission'],
+  ['신호등2 빨강에 누름', 'sig2_commission'],
+  ['반응 저하(2회차÷1회차)', 'sig_rtDrift'],
+  ['놓침 증가(2회차-1회차)', 'sig_omissionDrift']
 ];
 
 // [연구] 원시 행동 기록을 저장할 드라이브 폴더 이름
