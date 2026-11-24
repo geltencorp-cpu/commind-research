@@ -28,6 +28,7 @@ DRAW_SLIDES = {"q13", "q15"}
 # 교통안전 문제 (오답률 B19)
 SAFETY_QS = ["q1", "q3", "q4", "q5", "q6", "q8", "q9", "q10", "q11", "q12"]
 
+ANTICIPATE_MS = 150     # 이보다 빠른 반응은 미리 누른 것 (사람이 보고 반응하는 데 최소 약 0.15초)
 HESITATE_MS = 2000      # 머뭇거림: 2초 이상 아무것도 누르지 않은 구간
 REPEAT_MS = 1000        # 불필요한 재터치: 같은 대상을 1초 안에 다시 누름
 UNSTABLE_SD = 1.0       # 기울기 불안정: 개인 평균보다 표준편차 1배 이상 빠르게 움직이는 구간
@@ -297,7 +298,12 @@ def signal_trials(events, rnd):
                 tr["press"], tr["rt"] = e[0], d.get("rt")
             else:
                 tr["extra"] += 1
-    return [trials[k] for k in sorted(trials)]
+    out = [trials[k] for k in sorted(trials)]
+    # 불이 켜지고 150ms 안에 누른 것은 보고 누른 반응이 아니라 미리 누른 것(연타)으로 보고 반응시간에서 뺌
+    for t in out:
+        if t["rt"] is not None and t["rt"] < ANTICIPATE_MS:
+            t["rt"] = None
+    return out
 
 
 def signal_drift(events):
@@ -351,6 +357,10 @@ def signal_features(events, tilt):
     if not trials:
         return out
     order = [trials[k] for k in sorted(trials)]
+    out["신호등_미리누름_수"] = sum(1 for t in order if t["rt"] is not None and t["rt"] < ANTICIPATE_MS)
+    for t in order:
+        if t["rt"] is not None and t["rt"] < ANTICIPATE_MS:
+            t["rt"] = None
     go = [t["rt"] for t in order if t["color"] == "green" and t["rt"] is not None]
     n_green = sum(1 for t in order if t["color"] == "green")
     n_red = sum(1 for t in order if t["color"] == "red")

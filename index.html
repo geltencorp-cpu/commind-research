@@ -2379,6 +2379,15 @@
             },
 
             start() {
+                // [연구] 참여 번호가 없으면 코그메이트 결과와 이을 수 없으므로 시작하지 않음
+                const codeEl = document.getElementById('participant-code');
+                const code = (codeEl.value || '').trim().toUpperCase().replace(/\s+/g, '');
+                if (!code) {
+                    this.showToast('연구 참여 번호를 먼저 넣어 주세요. (진행자 시험은 T로 시작, 예: T003)');
+                    codeEl.focus(); codeEl.style.borderColor = '#e74c3c';
+                    return;
+                }
+                codeEl.value = code; codeEl.style.borderColor = '';
                 // [수정] 시작 시 강제 전체 화면 코드 제거됨
                 // BehaviorTracker.toggleFullScreen(); <-- 삭제됨
                 
@@ -2386,7 +2395,7 @@
                 const sensorAsk = ResearchLog.requestSensors();
                 this.resetVariables();
                 this.recordId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-                this.participantCode = (document.getElementById('participant-code').value || '').trim();
+                this.participantCode = code;
                 this.autoSaved = false;
                 ResearchLog.begin(this.recordId);
                 sensorAsk.then(state => ResearchLog.event('sensor_permission', { state }));
