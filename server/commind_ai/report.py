@@ -27,7 +27,7 @@ SYSTEM = """너는 어르신 교통안전 교육 프로그램 '콤마인드'의 
 2. 점수, 등급, 숫자를 말하지 않는다. 영역의 '상태' 문장을 그대로 쓴다. (생활 실천 안의 숫자는 그대로 써도 된다)
 3. 병 이름, 진단, 약, 치료, 상담, 센터, 병원 이야기를 하지 않는다. 이것은 의학적 진단이 아닌 생활 점검이다.
 4. 어르신이 읽기 쉽게 짧은 문장, 존댓말, 쉬운 낱말을 쓴다. 영어, 전문 용어, '어르신님' 같은 호칭을 쓰지 않는다.
-5. 순서: 잘한 점 → 연습하면 좋은 점(있으면 하나만, 그대로) → 생활 실천 2가지.
+5. 순서: 영역마다 '상태' 문장을 그대로 쓰고 잘한 점을 붙인다 → 연습하면 좋은 점(있으면 하나만, 그대로) → '권할 생활 실천' 2가지를 그대로 권한다. 다른 실천을 더하지 않는다.
 6. '하지만', '그러나', '부족', '실수', '못하' 같은 말을 쓰지 않는다. 연습하면 좋은 점은 '그리고'나 '또'로 이어서 말한다.
 7. 전체 3~5문장, 제목이나 목록 기호 없이 한 문단으로 쓴다."""
 
@@ -50,13 +50,18 @@ def facts(pred: dict, rules: dict | None = None, name: str = "어르신") -> dic
         good = [] if p["grade"] == "C" else [PHRASES[d["col"]][0] for d in use if d["contribution"] > 0.3][:2]
         weak = [PHRASES[d["col"]][1] for d in use if d["contribution"] < -0.3]
         if weak:
-            practice.append((min(d["contribution"] for d in use), weak[0]))
+            practice.append((min(d["contribution"] for d in use), weak[0], p["name"], p["grade"]))
         f["영역"].append({"이름": p["name"], "상태": f"{p['name']}은 {STATE[p['grade']]}", "잘한 점": good,
                          "_점수": p["score"], "_등급": p["grade"]})
-        if p["grade"] != "A":
-            acts = ACTIONS[p["name"]] + acts
     f["연습하면 좋은 점(하나)"] = min(practice)[1] if practice else ""
-    f["권할 생활 실천(이 중에서 2가지)"] = acts[:6]
+    # 실천은 프로그램이 2개만 고름: 연습 문장과 같은 영역(그 영역이 A가 아닐 때) 또는 가장 약한 영역 1개 + 공통 1개
+    weak_areas = sorted([a for a in f["영역"] if a["_등급"] != "A"], key=lambda a: a["_점수"])
+    focus = None
+    if practice and min(practice)[3] != "A":
+        focus = min(practice)[2]
+    elif weak_areas:
+        focus = weak_areas[0]["이름"]
+    f["권할 생활 실천(2가지)"] = [ACTIONS[focus][0], ACTIONS["공통"][0]] if focus else list(ACTIONS["공통"][:2])
     if pred.get("brain_age"):
         diff = pred["brain_age"]["score"] - pred["brain_age"]["age"]
         f["두뇌 활동 나이"] = ("실제 나이와 비슷해요" if abs(diff) < 3 else
@@ -107,6 +112,9 @@ def guard(text: str, f: dict) -> list:
         problems.append(f"쓰면 안 되는 표현 {hit}")
     # 낱말 중간에 들어간 경우는 빼고 셈 (예: '연습하실수록'의 '실수')
     tone = [w for w in TONE if re.search(r"(?<![가-힣])" + w, text)]
+    lost = [a["이름"] for a in f.get("영역", []) if a["이름"] not in text]
+    if lost:
+        problems.append(f"빠진 영역 {lost}")
     if tone:
         problems.append(f"말투 {tone}")
     if len(text) < 40:
@@ -125,7 +133,7 @@ def template(f: dict) -> str:
         s.append("두뇌 활동 나이는 " + f["두뇌 활동 나이"] + ".")
     if f.get("연습하면 좋은 점(하나)"):
         s.append("그리고 " + f["연습하면 좋은 점(하나)"] + ".")
-    acts = f.get("권할 생활 실천(이 중에서 2가지)", ["하루 30분 걷기", "가족·이웃과 자주 대화하기"])
+    acts = f.get("권할 생활 실천(2가지)", ["하루 30분 걷기", "가족·이웃과 자주 대화하기"])
     s.append(f"오늘부터 '{acts[0]}'와 '{acts[1]}'를 꾸준히 해 보세요.")
     return " ".join(s)
 
