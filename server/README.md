@@ -21,6 +21,16 @@
 
 ## 우분투(26.10)에 설치
 
+### 한 번에 설치 (추천)
+```bash
+git clone https://github.com/geltencorp-cpu/commind-research.git ~/commind-research
+bash ~/commind-research/server/setup_ubuntu.sh --service
+```
+패키지 → 파이썬 환경 → 시연 모델 → 올라마·언어모델 → 자동 실행 등록 → 점검까지 차례로 합니다. 중간에 관리자 비밀번호(sudo)를 물을 수 있습니다.
+마지막의 `[점검 결과 시작] ~ [점검 결과 끝]`을 복사해 두면 문제를 찾기 쉽습니다.
+
+### 직접 하나씩 설치
+
 ```bash
 # 1. 기본 도구
 sudo apt update && sudo apt install -y python3-venv git curl
