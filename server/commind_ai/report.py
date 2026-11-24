@@ -16,16 +16,19 @@ OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "exaone3.5:7.8b")
 TIMEOUT = float(os.environ.get("OLLAMA_TIMEOUT", "120"))
 
-BANNED = ["치매", "알츠하이머", "경도인지장애", "진단", "질환", "질병", "병원에 가", "약을", "처방", "MCI"]
+BANNED = ["치매", "알츠하이머", "경도인지장애", "진단", "질환", "질병", "병원", "약을", "처방", "MCI", "센터"]
+# 등급 C가 있을 때 프로그램이 직접 덧붙이는 안내 (언어모델이 쓰지 않음)
+CENTER = "가까운 치매안심센터에서 무료로 자세한 상담을 받아 보시길 권해요."
 
 SYSTEM = """너는 어르신 교통안전 교육 프로그램 '콤마인드'의 결과 설명 도우미다.
 규칙:
 1. 아래 [결과]에 있는 숫자와 사실만 사용한다. 새로운 숫자나 사실을 만들지 않는다.
 2. 병 이름, 진단, 약, 치료에 대한 말을 하지 않는다. 이것은 의학적 진단이 아닌 생활 점검이다.
 3. 어르신이 읽기 쉽게 짧은 문장, 존댓말, 쉬운 낱말을 쓴다. 영어와 전문 용어를 쓰지 않는다.
-4. 좋은 점을 먼저 말하고, 아쉬운 점은 부드럽게 말한 뒤, [결과]의 '권할 생활 실천' 중 2가지를 그대로 권한다.
-5. 등급이 C인 영역이 있으면 '가까운 치매안심센터에서 무료로 자세한 상담을 받아 보시길 권해요'라고 한 번만 안내한다.
-6. 전체 5~7문장, 제목이나 목록 기호 없이 한 문단으로 쓴다."""
+4. 좋은 점을 먼저 말한다. 아쉬운 점은 하나만, '조금 더 연습하면 좋아요'처럼 부드럽게 말한다. '하지만', '부족', '나쁨' 같은 말은 쓰지 않는다.
+5. [결과]의 '권할 생활 실천' 중 2가지를 그대로 권한다.
+6. 상담, 센터, 병원, 검사 안내는 쓰지 않는다. 필요한 안내는 프로그램이 따로 덧붙인다.
+7. 전체 4~6문장, 제목이나 목록 기호 없이 한 문단으로 쓴다."""
 
 
 def facts(pred: dict, rules: dict | None = None, name: str = "어르신") -> dict:
@@ -42,7 +45,7 @@ def facts(pred: dict, rules: dict | None = None, name: str = "어르신") -> dic
                          "잘한 점": good, "아쉬운 점": weak})
         if p["grade"] != "A":
             acts = ACTIONS[p["name"]] + acts
-    f["권할 생활 실천(이 중에서 2가지)"] = acts[:4]
+    f["권할 생활 실천(이 중에서 2가지)"] = acts[:6]
     if pred.get("brain_age"):
         f["뇌 나이"] = pred["brain_age"]["score"]
         f["실제 나이"] = pred["brain_age"]["age"]
@@ -103,9 +106,11 @@ def template(f: dict) -> str:
             s.append(a["잘한 점"][0] + ".")
             break
     s.append(f"오늘부터 '{acts[0]}'와 '{acts[1]}'를 꾸준히 해 보세요.")
-    if any(a["등급"] == "C" for a in f["영역"]):
-        s.append("가까운 치매안심센터에서 무료로 자세한 상담을 받아 보시길 권해요.")
-    return " ".join(s)
+    return " ".join(s) + _center(f)
+
+
+def _center(f):
+    return (" " + CENTER) if any(a["등급"] == "C" for a in f["영역"]) else ""
 
 
 def ollama_ok() -> dict:
@@ -132,4 +137,4 @@ def write(f: dict) -> dict:
     problems = guard(text, f)
     if problems:
         return {"text": template(f), "source": "template", "model": OLLAMA_MODEL, "guard": problems, "rejected": text}
-    return {"text": text, "source": "ollama", "model": OLLAMA_MODEL, "guard": []}
+    return {"text": text + _center(f), "source": "ollama", "model": OLLAMA_MODEL, "guard": []}

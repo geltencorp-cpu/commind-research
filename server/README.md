@@ -69,6 +69,14 @@ sudo systemctl daemon-reload && sudo systemctl enable --now commind-ai
 ```
 올라마는 설치할 때 자동 실행으로 등록됩니다.
 
+## 리포트 언어모델 고르기
+
+```bash
+OLLAMA_MODEL=qwen2.5vl:7b python3 report_eval.py -n 20     # 가상 참여자 20명으로 시험
+```
+안전장치 통과율, 걸린 이유, 걸린 시간을 보여 주고 글 전체를 `data/report_eval_<모델>.md`에 저장합니다.
+치매안심센터 상담 안내는 언어모델이 쓰지 않고, 등급 C가 있을 때 프로그램이 문장 끝에 직접 덧붙입니다.
+
 ## 시연 화면 (http://서버IP:8000)
 
 - 왼쪽에서 참여자를 누르면 **그 사람을 빼고 학습한 모델의 예측**과 코그메이트 실제 점수를 나란히 보여 줍니다.
