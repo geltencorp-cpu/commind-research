@@ -10,7 +10,7 @@ import re
 
 import httpx
 
-from .config import ACTIONS, PHRASES
+from .config import ACTIONS, PHRASES, STATE
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "exaone3.5:7.8b")
@@ -18,39 +18,61 @@ TIMEOUT = float(os.environ.get("OLLAMA_TIMEOUT", "120"))
 
 BANNED = ["치매", "알츠하이머", "경도인지장애", "진단", "질환", "질병", "병원", "약을", "처방", "MCI", "센터"]
 # 등급 C가 있을 때 프로그램이 직접 덧붙이는 안내 (언어모델이 쓰지 않음)
-CENTER = "가까운 치매안심센터에서 무료로 자세한 상담을 받아 보시길 권해요."
+CENTER = "가까운 보건소(치매안심센터)에서 무료로 기억력 상담을 받으실 수 있어요."
 
 SYSTEM = """너는 어르신 교통안전 교육 프로그램 '콤마인드'의 결과 설명 도우미다.
+인사말은 프로그램이 먼저 붙이므로 너는 인사 없이 바로 본문부터 쓴다.
 규칙:
-1. 아래 [결과]에 있는 숫자와 사실만 사용한다. 새로운 숫자나 사실을 만들지 않는다.
-2. 병 이름, 진단, 약, 치료에 대한 말을 하지 않는다. 이것은 의학적 진단이 아닌 생활 점검이다.
-3. 어르신이 읽기 쉽게 짧은 문장, 존댓말, 쉬운 낱말을 쓴다. 영어와 전문 용어를 쓰지 않는다.
-4. 좋은 점을 먼저 말한다. 아쉬운 점은 하나만, '조금 더 연습하면 좋아요'처럼 부드럽게 말한다. '하지만', '부족', '나쁨' 같은 말은 쓰지 않는다.
-5. [결과]의 '권할 생활 실천' 중 2가지를 그대로 권한다.
-6. 상담, 센터, 병원, 검사 안내는 쓰지 않는다. 필요한 안내는 프로그램이 따로 덧붙인다.
-7. 전체 4~6문장, 제목이나 목록 기호 없이 한 문단으로 쓴다."""
+1. 아래 [결과]에 있는 표현과 사실만 사용한다. 새로운 사실을 만들지 않는다.
+2. 점수, 등급, 숫자를 말하지 않는다. 영역의 '상태' 문장을 그대로 쓴다. (생활 실천 안의 숫자는 그대로 써도 된다)
+3. 병 이름, 진단, 약, 치료, 상담, 센터, 병원 이야기를 하지 않는다. 이것은 의학적 진단이 아닌 생활 점검이다.
+4. 어르신이 읽기 쉽게 짧은 문장, 존댓말, 쉬운 낱말을 쓴다. 영어, 전문 용어, '어르신님' 같은 호칭을 쓰지 않는다.
+5. 순서: 잘한 점 → 연습하면 좋은 점(있으면 하나만, 그대로) → 생활 실천 2가지.
+6. '하지만', '그러나', '부족', '실수', '못하' 같은 말을 쓰지 않는다. 연습하면 좋은 점은 '그리고'나 '또'로 이어서 말한다.
+7. 전체 3~5문장, 제목이나 목록 기호 없이 한 문단으로 쓴다."""
+
+GREETING = "{name}, 오늘 교통안전 교육과 활동에 끝까지 함께해 주셔서 감사합니다."
+# 말투 안전장치: 어르신께 부담이 되는 표현
+TONE = ["하지만", "그러나", "부족", "실수", "못하", "나쁘", "떨어지", "등급", "점수", "어르신님", "이름하신"]
 
 
 def facts(pred: dict, rules: dict | None = None, name: str = "어르신") -> dict:
+    """리포트 재료. '_'로 시작하는 칸(점수·등급)은 언어모델에 보내지 않음"""
     f = {"이름": name, "영역": []}
     acts = list(ACTIONS["공통"])
+    practice = []
     for key in ("attention", "memory"):
         p = pred.get(key)
         if not p:
             continue
         use = [d for d in p["factors"] if d["col"] in PHRASES and not d["missing"]]
-        good = [PHRASES[d["col"]][0] for d in use if d["contribution"] > 0.3][:2]
-        weak = [PHRASES[d["col"]][1] for d in use if d["contribution"] < -0.3][:2]
-        f["영역"].append({"이름": p["name"], "점수": p["score"], "만점": 50, "등급": p["grade"],
-                         "잘한 점": good, "아쉬운 점": weak})
+        # 등급 C 영역에서는 그 영역의 세부 칭찬을 하지 않음 (점수와 칭찬이 어긋나 보이지 않게)
+        good = [] if p["grade"] == "C" else [PHRASES[d["col"]][0] for d in use if d["contribution"] > 0.3][:2]
+        weak = [PHRASES[d["col"]][1] for d in use if d["contribution"] < -0.3]
+        if weak:
+            practice.append((min(d["contribution"] for d in use), weak[0]))
+        f["영역"].append({"이름": p["name"], "상태": f"{p['name']}은 {STATE[p['grade']]}", "잘한 점": good,
+                         "_점수": p["score"], "_등급": p["grade"]})
         if p["grade"] != "A":
             acts = ACTIONS[p["name"]] + acts
+    f["연습하면 좋은 점(하나)"] = min(practice)[1] if practice else ""
     f["권할 생활 실천(이 중에서 2가지)"] = acts[:6]
     if pred.get("brain_age"):
-        f["뇌 나이"] = pred["brain_age"]["score"]
-        f["실제 나이"] = pred["brain_age"]["age"]
+        diff = pred["brain_age"]["score"] - pred["brain_age"]["age"]
+        f["두뇌 활동 나이"] = ("실제 나이와 비슷해요" if abs(diff) < 3 else
+                         ("실제보다 조금 높게 나왔어요" if diff > 0 else "실제보다 젊게 나왔어요"))
+        f["_뇌 나이"], f["_실제 나이"] = pred["brain_age"]["score"], pred["brain_age"]["age"]
     if rules:
-        f["참고 영역(검증 전)"] = rules
+        f["_참고 영역(검증 전)"] = rules
+    return f
+
+
+def llm_view(f):
+    """언어모델에 보낼 재료: 점수·등급 등 '_' 칸 제거"""
+    if isinstance(f, dict):
+        return {k: llm_view(v) for k, v in f.items() if not k.startswith("_")}
+    if isinstance(f, list):
+        return [llm_view(x) for x in f]
     return f
 
 
@@ -71,46 +93,45 @@ def _allowed(f):
         elif isinstance(v, str):
             nums.update(_numbers(v))
     walk(f)
-    nums.update({1.0, 2.0, 50.0})   # '2가지', '하루 1번' 같은 표현 허용
-    if "뇌 나이" in f and "실제 나이" in f:
-        nums.add(float(round(abs(f["뇌 나이"] - f["실제 나이"]))))
+    nums.update({1.0, 2.0})   # '2가지', '하루 1번' 같은 표현 허용
     return nums
 
 
 def guard(text: str, f: dict) -> list:
     problems = []
-    extra = sorted(n for n in _numbers(text) if n not in _allowed(f))
+    extra = sorted(n for n in _numbers(text) if n not in _allowed(llm_view(f)))
     if extra:
         problems.append(f"결과에 없는 숫자 {extra}")
     hit = [w for w in BANNED if w in text]
     if hit:
         problems.append(f"쓰면 안 되는 표현 {hit}")
+    # 낱말 중간에 들어간 경우는 빼고 셈 (예: '연습하실수록'의 '실수')
+    tone = [w for w in TONE if re.search(r"(?<![가-힣])" + w, text)]
+    if tone:
+        problems.append(f"말투 {tone}")
     if len(text) < 40:
         problems.append("너무 짧음")
     return problems
 
 
 def template(f: dict) -> str:
-    """올라마를 쓸 수 없거나 안전장치에 걸렸을 때 쓰는 기본 문장"""
-    s = [f"{f['이름']}, 오늘 교통안전 교육과 활동에 끝까지 참여해 주셔서 감사합니다."]
+    """올라마를 쓸 수 없거나 안전장치에 걸렸을 때 쓰는 기본 문장 (인사·센터 안내는 write()가 붙임)"""
+    s = []
     for a in f["영역"]:
-        msg = {"A": "좋은 편이에요", "B": "조금 더 신경 쓰면 좋아요", "C": "관심을 가지고 관리가 필요해요"}[a["등급"]]
-        s.append(f"{a['이름']}은 {a['점수']}점으로 {msg}.")
-    if "뇌 나이" in f:
-        diff = f["뇌 나이"] - f["실제 나이"]
-        s.append("두뇌 활동 나이는 실제 나이와 비슷해요." if abs(diff) < 3 else
-                 ("두뇌 활동 나이가 실제보다 조금 높게 나왔어요." if diff > 0 else "두뇌 활동 나이가 실제보다 젊게 나왔어요."))
-    acts = f.get("권할 생활 실천(이 중에서 2가지)", ["하루 30분 걷기", "가족·이웃과 자주 대화하기"])
-    for a in f["영역"]:
+        s.append(a["상태"] + ".")
         if a["잘한 점"]:
             s.append(a["잘한 점"][0] + ".")
-            break
+    if f.get("두뇌 활동 나이"):
+        s.append("두뇌 활동 나이는 " + f["두뇌 활동 나이"] + ".")
+    if f.get("연습하면 좋은 점(하나)"):
+        s.append("그리고 " + f["연습하면 좋은 점(하나)"] + ".")
+    acts = f.get("권할 생활 실천(이 중에서 2가지)", ["하루 30분 걷기", "가족·이웃과 자주 대화하기"])
     s.append(f"오늘부터 '{acts[0]}'와 '{acts[1]}'를 꾸준히 해 보세요.")
-    return " ".join(s) + _center(f)
+    return " ".join(s)
 
 
 def _center(f):
-    return (" " + CENTER) if any(a["등급"] == "C" for a in f["영역"]) else ""
+    return (" " + CENTER) if any(a["_등급"] == "C" for a in f["영역"]) else ""
 
 
 def ollama_ok() -> dict:
@@ -124,7 +145,8 @@ def ollama_ok() -> dict:
 
 def write(f: dict) -> dict:
     """리포트 만들기. 결과: text, source(ollama/template), 안전장치 결과"""
-    user = "[결과]\n" + str(f).replace("'", '"') + "\n\n위 결과로 어르신께 드릴 설명을 써 주세요."
+    head = GREETING.format(name=f.get("이름", "어르신"))
+    user = "[결과]\n" + str(llm_view(f)).replace("'", '"') + "\n\n위 결과로 어르신께 드릴 설명 본문을 써 주세요."
     try:
         r = httpx.post(f"{OLLAMA_URL}/api/chat", timeout=TIMEOUT, json={
             "model": OLLAMA_MODEL, "stream": False, "options": {"temperature": 0.2},
@@ -132,9 +154,10 @@ def write(f: dict) -> dict:
         r.raise_for_status()
         text = r.json()["message"]["content"].strip()
     except Exception as e:
-        return {"text": template(f), "source": "template", "model": None,
+        return {"text": head + " " + template(f) + _center(f), "source": "template", "model": None,
                 "guard": [f"올라마 연결 안 됨 ({type(e).__name__})"]}
     problems = guard(text, f)
     if problems:
-        return {"text": template(f), "source": "template", "model": OLLAMA_MODEL, "guard": problems, "rejected": text}
-    return {"text": text + _center(f), "source": "ollama", "model": OLLAMA_MODEL, "guard": []}
+        return {"text": head + " " + template(f) + _center(f), "source": "template", "model": OLLAMA_MODEL,
+                "guard": problems, "rejected": text}
+    return {"text": head + " " + text + _center(f), "source": "ollama", "model": OLLAMA_MODEL, "guard": []}

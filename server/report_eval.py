@@ -43,7 +43,7 @@ for k, i in enumerate(idx):
     res = report.write(f)
     dt = time.time() - t0
     times.append(dt)
-    grades = "/".join(x["등급"] for x in f["영역"])
+    grades = "/".join(x["_등급"] for x in f["영역"])
     if res["source"] == "ollama":
         ok += 1
     for g in res["guard"]:
