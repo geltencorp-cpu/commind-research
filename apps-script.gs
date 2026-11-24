@@ -132,7 +132,14 @@ var COLUMNS = [
   ['신호등2 놓침', 'sig2_omission'],
   ['신호등2 빨강에 누름', 'sig2_commission'],
   ['반응 저하(2회차÷1회차)', 'sig_rtDrift'],
-  ['놓침 증가(2회차-1회차)', 'sig_omissionDrift']
+  ['놓침 증가(2회차-1회차)', 'sig_omissionDrift'],
+  // ----- [연구] 진행자가 입력한 코그메이트 결과 (비교 기준) -----
+  ['코그메이트 집중력', 'cg_attention'],
+  ['코그메이트 기억력', 'cg_memory'],
+  ['코그메이트 뇌나이', 'cg_brainAge'],
+  ['검사 순서', 'cg_order'],
+  ['진행자 메모', 'cg_note'],
+  ['코그메이트 입력 시각', 'cg_enteredAt']
 ];
 
 // [연구] 원시 행동 기록을 저장할 드라이브 폴더 이름
@@ -245,12 +252,7 @@ function doPost(e) {
     // [연구] 참여 번호도 글자 형식 (001 이 1 로 바뀌면 코그메이트 결과와 이을 수 없음)
     sheet.getRange(1, keyIndex('participantCode') + 1, sheet.getMaxRows(), 1).setNumberFormat('@');
 
-    var row = COLUMNS.map(function (c) {
-      var value = data[c[1]];
-      return (value === undefined || value === null) ? '' : value;
-    });
-
-    // 같은 기록ID가 이미 있으면 그 줄을 고쳐 쓰고, 없으면 새 줄 추가
+    // 같은 기록ID가 이미 있는 줄 찾기
     var idCol = keyIndex('recordId') + 1;
     var target = 0;
     if (data.recordId && sheet.getLastRow() > 1) {
@@ -259,11 +261,23 @@ function doPost(e) {
         if (ids[i][0] === data.recordId) { target = i + 2; break; }
       }
     }
+
+    // 그 줄이 있으면, 이번에 보내지 않은 칸은 원래 값을 지킴 (예: 코그메이트 점수를 넣은 뒤 상담 신청을 다시 보내도 지워지지 않게)
+    var old = target ? sheet.getRange(target, 1, 1, COLUMNS.length).getValues()[0] : null;
+    var row = COLUMNS.map(function (c, k) {
+      var value = data[c[1]];
+      if (value === undefined || value === null) return old ? old[k] : '';
+      return value;
+    });
+
     if (target) {
       sheet.getRange(target, 1, 1, row.length).setValues([row]);
     } else {
       sheet.appendRow(row);
     }
+
+    // [연구] 코그메이트 결과만 덧붙인 전송이면 기관 등록 등은 건너뜀
+    if (data.type === 'cogmate') return ContentService.createTextOutput('OK');
 
     registerInstitution(ss, data.institution, data.location);
   } finally {

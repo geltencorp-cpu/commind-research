@@ -260,6 +260,18 @@
             display: flex; align-items: center; gap: 8px; z-index: 100; 
         }
         .btn-prev:active { transform: translateY(4px); box-shadow: none; }
+        .admin-cg-btn { position: absolute; top: 20px; left: 20px; height: 44px; padding: 0 16px; border-radius: 22px; background: #ecf0f1; color: #7f8c8d; border: 2px solid #bdc3c7; font-size: 16px; cursor: pointer; z-index: 100; display: flex; align-items: center; gap: 6px; }
+        .admin-cg-btn.done { background: #e8f8f0; color: #1e8449; border-color: #27ae60; }
+        .cg-who { font-size: 18px; color: #555; margin-bottom: 12px; }
+        .cg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+        .cg-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 17px; color: #333; text-align: left; }
+        .cg-grid small { color: #888; font-size: 13px; }
+        .cg-grid input, .cg-note { width: 100%; box-sizing: border-box; font-size: 20px; padding: 10px; border: 2px solid #ddd; border-radius: 10px; }
+        .cg-order { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 17px; margin-bottom: 12px; }
+        .cg-order span { color: #555; }
+        .cg-note { margin-bottom: 12px; font-size: 17px; }
+        .cg-msg { min-height: 24px; margin-top: 10px; font-size: 16px; }
+        .cg-msg.bad { color: #c0392b; } .cg-msg.ok { color: #1e8449; }
         .admin-reset-btn { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background-color: #ecf0f1; color: #95a5a6; border: 2px solid #bdc3c7; font-size: 18px; cursor: pointer; transition: all 0.2s; z-index: 100; display: flex; justify-content: center; align-items: center; }
         
         /* 전체 화면 버튼 */
@@ -621,6 +633,28 @@
     </div>
 
     <!-- [NEW] 검사 장소(기관) 선택 -->
+    <!-- [연구] 진행자용: 코그메이트 결과 입력 -->
+    <div id="cg-modal" class="modal-overlay">
+        <div class="modal-box" oninput="const m=document.getElementById('cg-msg'); if (m.classList.contains('bad')) { m.innerText=''; m.className='cg-msg'; }">
+            <button class="btn-close-modal" onclick="app.closeCgModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-title"><i class="fa-solid fa-user-pen"></i> 진행자 입력: 코그메이트 결과</div>
+            <div class="cg-who">참여 번호 <b id="cg-code">-</b></div>
+            <div class="cg-grid">
+                <label>집중력 <small>(0~50)</small><input type="number" id="cg-att" inputmode="decimal" step="0.1" min="0" max="50"></label>
+                <label>기억력 <small>(0~50)</small><input type="number" id="cg-mem" inputmode="decimal" step="0.1" min="0" max="50"></label>
+                <label>뇌 나이 <small>(세)</small><input type="number" id="cg-age" inputmode="decimal" step="0.1" min="30" max="120"></label>
+            </div>
+            <div class="cg-order">
+                <span>검사 순서</span>
+                <label><input type="radio" name="cg-order" value="콤마인드 먼저"> 콤마인드 먼저</label>
+                <label><input type="radio" name="cg-order" value="코그메이트 먼저"> 코그메이트 먼저</label>
+            </div>
+            <input type="text" id="cg-note" class="cg-note" placeholder="특이사항 (선택) 예: 보청기 안 씀, 중간에 쉼">
+            <button class="btn-submit" onclick="app.saveCogmate()">저장</button>
+            <div id="cg-msg" class="cg-msg" aria-live="polite"></div>
+        </div>
+    </div>
+
     <div id="inst-modal" class="modal-overlay">
         <div class="modal-box">
             <button class="btn-close-modal" onclick="InstPicker.close()" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
@@ -1058,6 +1092,7 @@
 
     <!-- Result -->
     <div class="slide-container" id="page-result">
+        <button class="admin-cg-btn" id="cg-open" onclick="app.openCgModal()"><i class="fa-solid fa-user-pen"></i> 코그메이트 입력</button>
         <button class="admin-reset-btn" onclick="app.reset()"><i class="fa-solid fa-rotate-right"></i></button>
         <div style="height: 100%; display: flex; flex-direction: column;">
             <div style="text-align: center; margin-bottom: 20px;">
@@ -2334,6 +2369,8 @@
                 this.signalStats = { correct: 0, commission: 0, omission: 0, presses: 0, extraPresses: 0 };
                 this.signalRTs = [];
                 this.signalStats2 = null; this.signalRTs2 = []; this.nbackResults = [];
+                this.cogmate = null;
+                { const b = document.getElementById('cg-open'); if (b) b.classList.remove('done'); }
                 this.videoAnswers = {};
                 Profile.reset();
                 this.reportData = null; // 초기화
@@ -2852,6 +2889,42 @@
                 document.getElementById('cognitive-warning').innerHTML = warningHTML;
             },
 
+            // [연구] 진행자용: 코그메이트 결과 3개 + 검사 순서 입력 → 같은 기록ID 줄에 덧붙여 저장
+            cogmate: null,
+            openCgModal() {
+                document.getElementById('cg-code').innerText = this.participantCode || '(번호 없음)';
+                const c = this.cogmate || {};
+                document.getElementById('cg-att').value = c.cg_attention ?? '';
+                document.getElementById('cg-mem').value = c.cg_memory ?? '';
+                document.getElementById('cg-age').value = c.cg_brainAge ?? '';
+                document.getElementById('cg-note').value = c.cg_note || '';
+                document.querySelectorAll('input[name="cg-order"]').forEach(r => r.checked = r.value === c.cg_order);
+                const m = document.getElementById('cg-msg'); m.innerText = ''; m.className = 'cg-msg';
+                document.getElementById('cg-modal').classList.add('open');
+            },
+            closeCgModal() { document.getElementById('cg-modal').classList.remove('open'); },
+            saveCogmate() {
+                const m = document.getElementById('cg-msg');
+                const bad = (t) => { m.innerText = t; m.className = 'cg-msg bad'; };
+                const num = (id, lo, hi) => { const v = document.getElementById(id).value.trim(); if (v === '') return NaN; const n = Number(v); return (n >= lo && n <= hi) ? Math.round(n * 10) / 10 : NaN; };
+                const att = num('cg-att', 0, 50), mem = num('cg-mem', 0, 50), age = num('cg-age', 30, 120);
+                if (isNaN(att)) return bad('집중력을 0~50 사이로 넣어 주세요.');
+                if (isNaN(mem)) return bad('기억력을 0~50 사이로 넣어 주세요.');
+                if (isNaN(age)) return bad('뇌 나이를 30~120 사이로 넣어 주세요.');
+                const ord = document.querySelector('input[name="cg-order"]:checked');
+                if (!ord) return bad('검사 순서를 골라 주세요.');
+                this.cogmate = { cg_attention: att, cg_memory: mem, cg_brainAge: age, cg_order: ord.value,
+                    cg_note: document.getElementById('cg-note').value.trim().slice(0, 200), cg_enteredAt: new Date().toISOString() };
+                const send = Object.assign({ type: 'cogmate', recordId: this.recordId, participantCode: this.participantCode || '' }, this.cogmate);
+                m.innerText = '저장 중입니다...'; m.className = 'cg-msg';
+                this.sendToSheet(send).then(() => {
+                    m.innerText = att === 0 ? '저장했어요. 집중력 0.0은 검사 미완료로 분석에서 빠집니다.' : '저장했어요.';
+                    m.className = 'cg-msg ok';
+                    document.getElementById('cg-open').classList.add('done');
+                    setTimeout(() => this.closeCgModal(), 1200);
+                }).catch(() => bad('저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.'));
+            },
+
             openConsentModal() { document.getElementById('consent-modal').classList.add('open'); },
             closeConsentModal() { document.getElementById('consent-modal').classList.remove('open'); },
             toggleSubmitBtn() {
@@ -2923,6 +2996,7 @@
                     ...this.reviewSummary(),
                     ...this.nbackSummary(),
                     ...this.signalRound2Summary(),
+                    ...(this.cogmate || {}),
                     sensorMotion: ResearchLog.peek() && ResearchLog.peek().motionSeen ? 1 : 0,
                     sensorPermission: ResearchLog.peek() ? ResearchLog.peek().sensorPermission : '',
                     logVersion: 3
