@@ -2,3 +2,7 @@ features*.csv
 *.json
 !package.json
 __pycache__/
+# AI 서버: 학습 데이터·모델은 올리지 않음 (가상 데이터는 make_virtual_training.py 로 다시 만듦)
+server/data/
+server/models/
+server/.venv/

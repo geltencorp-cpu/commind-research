@@ -1,0 +1,14 @@
+# /etc/systemd/system/commind-ai.service  (README의 '컴퓨터를 켜면 자동 실행' 참고)
+[Unit]
+Description=COMMIND AI server
+After=network-online.target ollama.service
+
+[Service]
+User=ubuntu   # 서버 로그인 사용자 이름으로 바꾸세요
+WorkingDirectory=/opt/commind-research/server
+Environment=OLLAMA_MODEL=exaone3.5:7.8b
+ExecStart=/opt/commind-research/server/.venv/bin/uvicorn app:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
