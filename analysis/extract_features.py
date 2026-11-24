@@ -448,7 +448,15 @@ def extract(path):
         qs = [summ.get(q) for q in SAFETY_QS if q not in ("q9", "q10", "q11", "q12") and summ.get(q) not in (None, "")]
         row["B19_교통문제_오답률"] = safe_div(sum(1 for v in qs if float(v) < 10), len(qs))
     rec = [e[3] for e in events if e[1] == "recall_submit"]
-    row["B23_표지판기억_오류"] = (3 - rec[-1]["hits"]) / 3 if rec else np.nan
+    picks = [e[3] for e in events if e[1] == "card_pick" and isinstance(e[3], dict)]
+    if picks:
+        # 기록형식 4부터: Q16 카드 위치 기억 (4번 묻기). B23 = 틀린 비율
+        row["B23_표지판기억_오류"] = sum(1 for p in picks if not p.get("correct")) / len(picks)
+        row["K01_카드위치_반응시간_ms"] = nan_mean([p["rt"] for p in picks if p.get("rt") is not None])
+        row["K02_카드위치_오차_칸"] = nan_mean([p.get("dist", 0) for p in picks])
+    else:
+        # 기록형식 3까지: 처음 본 3개 고르기
+        row["B23_표지판기억_오류"] = (3 - rec[-1]["hits"]) / 3 if rec else np.nan
 
     # M: 복습 퀴즈 (기억력 보조 지표, 원시 기록의 review_answer 사건에서 계산)
     rv = [e[3] for e in events if e[1] == "review_answer"]

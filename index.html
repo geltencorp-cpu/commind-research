@@ -202,6 +202,23 @@
         .sign-item { background: #fff; border: 4px solid #eee; border-radius: 20px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-family: 'Jua', sans-serif; font-size: clamp(18px, 2.4vw, 24px); color: #333; }
         .sign-item svg { width: 100%; max-width: 130px; aspect-ratio: 1; display: block; }
         button.sign-item { cursor: pointer; }
+        /* [연구] Q16 카드 위치 기억 */
+        .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: 100%; max-width: min(540px, 62vh); }
+        .card { aspect-ratio: 1 / 1.05; border-radius: 18px; border: 4px solid #eee; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; font-family: 'Jua', sans-serif; font-size: clamp(15px, 2.6vh, 22px); color: #333; transition: transform .18s; touch-action: manipulation; }
+        .card svg { width: 72%; aspect-ratio: 1; display: block; }
+        .card.back { background: repeating-linear-gradient(45deg, #ffb74d 0 12px, #ffa726 12px 24px); border-color: #fb8c00; color: #fff; font-size: clamp(34px, 7vh, 60px); }
+        .card.flip { transform: scaleX(0); }
+        .card.ok { border-color: #27ae60; background: #eafaf1; }
+        .card.no { border-color: #e74c3c; background: #fdecea; }
+        button.card { cursor: pointer; }
+        .card-ask { display: flex; align-items: center; justify-content: center; gap: 14px; min-height: 64px; }
+        .card-ask .ask-sign { width: clamp(48px, 9vh, 72px); }
+        .card-ask .ask-sign svg { width: 100%; display: block; }
+        .card-ask .ask-text { font-family: 'Jua', sans-serif; font-size: clamp(22px, 4vh, 32px); color: #2c3e50; text-align: left; }
+        .card-tip { min-height: 2.6em; font-size: clamp(17px, 2.8vh, 22px); color: #1e8449; text-align: center; line-height: 1.3; }
+        .card-tip.bad { color: #c0392b; }
+        .card-tip:empty { min-height: 0; }
+        .card-count { font-family: 'Jua', sans-serif; font-size: clamp(30px, 6vh, 48px); color: #e67e22; }
         button.sign-item.selected { border-color: #ffaa00; background: #fff3e0; }
         button.sign-item.selected::after { content: '✔'; position: absolute; top: -12px; right: -12px; width: 38px; height: 38px; border-radius: 50%; background: #e67e22; color: #fff; font-size: 24px; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; }
 
@@ -589,6 +606,7 @@
             #clock-canvas { width: min(400px, 78vw, 44vh); }
             .match-area { gap: clamp(46px, 11vh, 130px); }
             .sign-grid { max-width: min(560px, 82vh); gap: 1.6vh; }
+            .card-grid { max-width: min(540px, 56vh); gap: 1.4vh; }
         }
     </style>
 </head>
@@ -752,17 +770,6 @@
                 <label class="pf-staff"><input type="checkbox" id="pf-assisted" onchange="Profile.assisted(this.checked)"> 진행자가 대신 눌러 드렸어요</label>
                 <button id="pf-next2" class="btn-start pf-next" onclick="Profile.next(2)" disabled>다음</button>
             </div>
-        </div>
-    </div>
-
-    <!-- [NEW] 기억 과제: 표지판 3개 외우기 (마지막 Q16에서 다시 물어봄) -->
-    <div class="slide-container" id="page-memo">
-        <button class="btn-prev" onclick="app.goToSlide('profile2')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
-        <div class="task-box">
-            <h2>먼저, 표지판 <span style="color:#e74c3c;">3개</span>를 기억하세요</h2>
-            <p class="task-guide"><i class="fa-solid fa-lightbulb"></i> 마지막에 다시 물어봅니다. 잘 봐두세요!</p>
-            <div class="sign-grid" id="memo-grid"></div>
-            <button class="btn-start btn-action task-btn" onclick="app.goToSlide('q1')">기억했어요</button>
         </div>
     </div>
 
@@ -1033,13 +1040,15 @@
         </div>
     </div>
 
-    <!-- [NEW] Q16 기억력: 처음에 본 표지판 고르기 -->
+    <!-- [연구] Q16 기억력: 표지판 카드 위치 기억 (보여주고 뒤집은 뒤 어디 있었는지 묻기) -->
     <div class="slide-container" id="page-q16">
         <button class="btn-prev" onclick="app.prev('q16')"><i class="fa-solid fa-arrow-left"></i> 이전</button>
         <div class="task-box">
-            <h2>Q16. 처음에 본 표지판 <span style="color:#e74c3c;">3개</span>를 골라주세요</h2>
-            <div class="sign-grid" id="recall-grid"></div>
-            <button id="recall-done" class="btn-start btn-action task-btn" onclick="RecallTask.submit()" disabled>다 골랐어요</button>
+            <h2 id="card-title">Q16. 표지판 <span style="color:#e74c3c;">6장</span>의 자리를 기억하세요</h2>
+            <div class="card-ask" id="card-ask"><span id="card-guide" class="task-guide">카드를 10초 동안 보여 드려요. 어떤 표지판이 <b>어디</b> 있는지 잘 봐 두세요.</span></div>
+            <div class="card-grid" id="card-grid"></div>
+            <div class="card-tip" id="card-tip"></div>
+            <button id="card-start" class="btn-start btn-action task-btn" onclick="CardTask.begin()">시작</button>
         </div>
     </div>
 
@@ -1486,7 +1495,9 @@
             slow: { name: '천천히', svg: '<svg viewBox="0 0 100 100"><polygon points="8,12 92,12 50,90" fill="#fff" stroke="#d62d20" stroke-width="9" stroke-linejoin="round"/><text x="50" y="40" text-anchor="middle" font-size="14" font-weight="900" fill="#111" font-family="sans-serif">천천히</text></svg>' },
             speed50: { name: '최고속도 50', svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="41" fill="#fff" stroke="#d62d20" stroke-width="10"/><text x="50" y="65" text-anchor="middle" font-size="42" font-weight="900" fill="#111" font-family="sans-serif">50</text></svg>' }
         };
-        const MEMO_TARGETS = ['stop', 'noentry', 'straight'];
+        // [연구] Q16 카드에 추가한 보행자용 표지판
+        SIGNS.crosswalk = { name: '횡단보도', svg: '<svg viewBox="0 0 100 100"><rect x="4" y="4" width="92" height="92" rx="10" fill="#1a4fb4"/><polygon points="50,12 88,82 12,82" fill="#fff"/><g fill="#222"><rect x="26" y="70" width="8" height="8"/><rect x="40" y="70" width="8" height="8"/><rect x="54" y="70" width="8" height="8"/><rect x="68" y="70" width="8" height="8"/><circle cx="50" cy="34" r="5"/></g><path d="M50 40 L48 54 L42 64 M48 54 L56 64 M49 44 L41 50 M49 44 L58 49" stroke="#222" stroke-width="4" fill="none" stroke-linecap="round"/></svg>' };
+        SIGNS.children = { name: '어린이 보호', svg: '<svg viewBox="0 0 100 100"><polygon points="50,6 96,88 4,88" fill="#fff" stroke="#d62d20" stroke-width="8" stroke-linejoin="round"/><g fill="#222"><circle cx="40" cy="42" r="5"/><circle cx="60" cy="48" r="4"/></g><path d="M40 48 L39 62 L34 74 M39 62 L44 74 M40 52 L50 56 M60 53 L60 64 L56 74 M60 64 L64 74 M60 57 L50 56" stroke="#222" stroke-width="4" fill="none" stroke-linecap="round"/></svg>' };
 
         const shuffled = (arr) => {
             const a = arr.slice();
@@ -1497,44 +1508,97 @@
             return a;
         };
 
-        // 기억 과제 1단계: 표지판 3개 보여주기
-        const MemoTask = {
-            enter() {
-                document.getElementById('memo-grid').innerHTML = MEMO_TARGETS.map(k =>
-                    `<div class="sign-item">${SIGNS[k].svg}<span>${SIGNS[k].name}</span></div>`).join('');
-                ResearchLog.event('memo_show', { targets: MEMO_TARGETS.slice() });
-            }
-        };
-
-        // 기억 과제 2단계 (Q16): 6개 중 처음에 본 3개 고르기
-        const RecallTask = {
-            picked: [],
-            enter() {
-                this.picked = [];
-                const grid = document.getElementById('recall-grid');
-                grid.innerHTML = shuffled(Object.keys(SIGNS)).map(k =>
-                    `<button type="button" class="sign-item" data-key="${k}">${SIGNS[k].svg}</button>`).join('');
-                grid.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => this.toggle(btn)));
-                document.getElementById('recall-done').disabled = true;
+        // [연구] 기억력 과제 (Q16): 표지판 카드 6장을 이름과 함께 보여 주고 뒤집은 뒤, 4번 "어디 있었나요?" 묻기
+        // 위치(짝) 기억 + 표지판 뜻 학습. 답할 때마다 정답 카드와 안전 수칙을 보여 줌
+        const CardTask = {
+            KEYS: ['crosswalk', 'children', 'stop', 'noentry', 'slow', 'noparking'],
+            TIPS: {
+                crosswalk: '횡단보도에서는 초록불을 확인하고 좌우를 살핀 뒤 건너요.',
+                children: '어린이 보호구역에서 차는 시속 30km 이하! 아이들이 갑자기 뛰어나올 수 있어요.',
+                stop: '정지 표지판 앞에서 차는 꼭 멈춰야 해요. 그래도 차가 서는지 눈으로 확인하세요.',
+                noentry: '차가 들어오면 안 되는 길이에요. 그래도 차가 올 수 있으니 살펴보세요.',
+                slow: '천천히 표지판 근처는 위험한 곳이에요. 걸을 때도 주위를 살펴요.',
+                noparking: '세워 둔 차 사이로 갑자기 나오지 마세요. 운전자가 보지 못해요.'
             },
-            toggle(btn) {
-                const key = btn.dataset.key;
-                if (this.picked.includes(key)) {
-                    this.picked = this.picked.filter(k => k !== key);
-                    btn.classList.remove('selected');
-                } else {
-                    if (this.picked.length >= 3) { app.showToast('3개만 고를 수 있어요. 바꾸려면 고른 것을 다시 누르세요.'); return; }
-                    this.picked.push(key);
-                    btn.classList.add('selected');
-                }
-                document.getElementById('recall-done').disabled = this.picked.length !== 3;
+            STUDY_MS: 10000, ASKS: 4, SHOW_MS: 3500, COLS: 3,
+            timers: [], layout: [], asks: [], qi: 0, awaiting: false, askAt: 0, results: [],
+            el(id) { return document.getElementById(id); },
+            later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+            stop() { this.timers.forEach(clearTimeout); this.timers = []; this.awaiting = false; },
+            front(k) { return `${SIGNS[k].svg}<span>${SIGNS[k].name}</span>`; },
+            draw(faceUp) {
+                this.el('card-grid').innerHTML = this.layout.map((k, i) => faceUp
+                    ? `<div class="card" data-pos="${i}">${this.front(k)}</div>`
+                    : `<button type="button" class="card back" data-pos="${i}">?</button>`).join('');
+                if (!faceUp) this.el('card-grid').querySelectorAll('button').forEach(b => b.addEventListener('pointerdown', (e) => this.pick(+b.dataset.pos, e)));
             },
-            submit() {
-                if (this.picked.length !== 3) return;
-                const hits = this.picked.filter(k => MEMO_TARGETS.includes(k)).length;
-                app.taskScores.memory = hits / 3;
-                ResearchLog.event('recall_submit', { picked: this.picked.slice(), targets: MEMO_TARGETS.slice(), hits });
-                app.finishTask(16);
+            turn(pos, cls) {
+                const c = this.el('card-grid').querySelector(`[data-pos="${pos}"]`);
+                if (!c) return;
+                c.classList.add('flip');
+                setTimeout(() => { c.className = 'card ' + (cls || ''); c.innerHTML = this.front(this.layout[pos]); }, 180);
+            },
+            enter() {
+                this.stop();
+                this.layout = shuffled(this.KEYS); this.results = []; this.qi = 0;
+                this.el('card-title').innerHTML = 'Q16. 표지판 <span style="color:#e74c3c;">6장</span>의 자리를 기억하세요';
+                this.el('card-ask').innerHTML = '<span class="task-guide">카드를 10초 동안 보여 드려요. 어떤 표지판이 <b>어디</b> 있는지 잘 봐 두세요.</span>';
+                this.el('card-tip').innerText = ''; this.el('card-tip').className = 'card-tip';
+                this.el('card-start').style.display = '';
+                this.el('card-grid').innerHTML = this.KEYS.map(() => '<div class="card back">?</div>').join('');
+            },
+            begin() {
+                this.stop();
+                this.el('card-start').style.display = 'none';
+                this.asks = shuffled(this.KEYS).slice(0, this.ASKS);
+                this.draw(true);
+                ResearchLog.event('card_study', { layout: this.layout.slice(), asks: this.asks.slice(), studyMs: this.STUDY_MS });
+                let left = Math.round(this.STUDY_MS / 1000);
+                const tick = () => {
+                    this.el('card-ask').innerHTML = `<span class="task-guide">자리를 잘 봐 두세요</span><span class="card-count">${left}</span>`;
+                    if (left-- > 0) this.later(tick, 1000); else this.hideAll();
+                };
+                tick();
+            },
+            hideAll() {
+                this.draw(false);
+                this.el('card-title').innerHTML = 'Q16. 표지판이 <span style="color:#e74c3c;">어디</span> 있었나요?';
+                this.later(() => this.ask(0), 600);
+            },
+            ask(i) {
+                if (i >= this.asks.length) return this.finish();
+                this.qi = i;
+                const k = this.asks[i];
+                this.el('card-ask').innerHTML = `<span class="ask-sign">${SIGNS[k].svg}</span><span class="ask-text">'${SIGNS[k].name}' 표지판은<br>어디 있었나요? <small style="color:#999;">(${i + 1}/${this.asks.length})</small></span>`;
+                this.el('card-tip').innerText = ''; this.el('card-tip').className = 'card-tip';
+                this.askAt = performance.now();
+                ResearchLog.event('card_ask', { i, target: k, pos: this.layout.indexOf(k) }, this.askAt);
+                this.awaiting = true;
+            },
+            pick(pos, e) {
+                if (!this.awaiting) return;
+                this.awaiting = false;
+                const at = (e && e.timeStamp) ? e.timeStamp : performance.now();
+                const k = this.asks[this.qi], tpos = this.layout.indexOf(k), ok = pos === tpos;
+                const dist = Math.abs(pos % this.COLS - tpos % this.COLS) + Math.abs(Math.floor(pos / this.COLS) - Math.floor(tpos / this.COLS));
+                const r = { i: this.qi, target: k, picked: this.layout[pos], pos, tpos, correct: ok, dist, rt: Math.round((at - this.askAt) * 10) / 10 };
+                this.results.push(r);
+                ResearchLog.event('card_pick', r, at);
+                this.turn(pos, ok ? 'ok' : 'no');
+                if (!ok) this.later(() => this.turn(tpos, 'ok'), 400);
+                const tip = this.el('card-tip');
+                tip.className = 'card-tip' + (ok ? '' : ' bad');
+                tip.innerText = (ok ? '맞아요! ' : '초록색 칸에 있었어요. ') + this.TIPS[k];
+                this.later(() => { this.draw(false); this.ask(this.qi + 1); }, this.SHOW_MS + (ok ? 0 : 400));
+            },
+            finish() {
+                const hits = this.results.filter(r => r.correct).length;
+                app.taskScores.memory = hits / this.asks.length;
+                app.cardResults = this.results.slice();
+                this.el('card-ask').innerHTML = '<span class="task-guide">끝났습니다. 수고하셨어요!</span>';
+                this.el('card-tip').innerText = '';
+                ResearchLog.event('card_end', { hits, n: this.asks.length });
+                this.later(() => app.finishTask(16), 1200);
             }
         };
 
@@ -2231,7 +2295,7 @@
             },
             next(n) {
                 this.leaveMs['profile' + n] = this.sinceEnter('profile' + n);
-                app.goToSlide(n === 1 ? 'profile2' : 'memo');
+                app.goToSlide(n === 1 ? 'profile2' : 'q1');
             },
             // 시트 한 줄에 들어갈 기본정보 + 응답 과정 요약
             summary() {
@@ -2329,7 +2393,7 @@
                 ResearchLog.event('session_start', { participantCode: this.participantCode, institution: InstPicker.name || '' });
                 this.requestLocation();
                 this.shuffleOptions();
-                this.goToSlide('profile1'); // [연구] 기본정보 → 표지판 3개 기억 → Q1
+                this.goToSlide('profile1'); // [연구] 기본정보 → Q1
             },
 
             // 검사 장소(기관) 구분용 위치. 브라우저가 위치 사용 허락을 한 번 묻습니다.
@@ -2369,7 +2433,7 @@
                 this.signalStats = { correct: 0, commission: 0, omission: 0, presses: 0, extraPresses: 0 };
                 this.signalRTs = [];
                 this.signalStats2 = null; this.signalRTs2 = []; this.nbackResults = [];
-                this.cogmate = null;
+                this.cogmate = null; this.cardResults = [];
                 { const b = document.getElementById('cg-open'); if (b) b.classList.remove('done'); }
                 this.videoAnswers = {};
                 Profile.reset();
@@ -2522,6 +2586,7 @@
                 VideoSound.detach();
                 SignalTask.stop();
                 NBackTask.stop();
+                CardTask.stop();
                 document.querySelectorAll('.slide-container').forEach(el => {
                     el.classList.remove('active');
                     const iframe = el.querySelector('iframe');
@@ -2533,7 +2598,7 @@
                     BehaviorTracker.startTimer();
                     ResearchLog.slide(id);
                     this.slideShownAt = performance.now();
-                    const tasks = { memo: MemoTask, q13: ClockTask, q14: { enter: () => SignalTask.enter(1) }, q15: MatchTask, q16: RecallTask,
+                    const tasks = { q13: ClockTask, q14: { enter: () => SignalTask.enter(1) }, q15: MatchTask, q16: CardTask,
                         q17: NBackTask, q18: { enter: () => SignalTask.enter(2) },
                         profile1: { enter: () => Profile.enter('profile1') }, profile2: { enter: () => Profile.enter('profile2') } };
                     if (tasks[id]) tasks[id].enter();
@@ -2552,7 +2617,7 @@
             },
 
             prev(currentId) {
-                if(currentId === 'q1') this.goToSlide('memo');
+                if(currentId === 'q1') this.goToSlide('profile2');
                 else {
                     const prevNum = parseInt(currentId.substring(1)) - 1;
                     this.goToSlide('q' + prevNum);
@@ -2826,7 +2891,7 @@
                 // 부족 1개 → 상담 권유 / 2개 → 상담 권장 / 3개 이상 → 상담을 꼭 권함
                 const DOMAIN_INFO = [
                     ['orientation', '지남력', 25, '오늘 날짜와 계절을 아는 능력'],
-                    ['memory', '기억력', 20, '처음 본 표지판을 기억하는 능력'],
+                    ['memory', '기억력', 20, '표지판 자리를 기억하는 능력'],
                     ['executive', '집행기능', 15, '신호에 맞춰 누르고 참는 능력'],
                     ['visuospatial', '시공간', 10, '시곗바늘 위치를 그리는 능력'],
                     ['language', '언어', 10, '그림을 보고 이름을 아는 능력'],
@@ -2982,7 +3047,7 @@
                     q13_clock: this.taskScores.clock,                          // 시계 그리기 0~10
                     q14_signal: this.signalStats.correct,                      // 신호등 맞게 반응한 횟수 0~10
                     q15_match: Math.round(this.taskScores.match * 4),          // 선 잇기 맞힌 개수 0~4
-                    q16_memory: Math.round(this.taskScores.memory * 3),        // 기억한 표지판 개수 0~3
+                    q16_memory: Math.round(this.taskScores.memory * 4),        // 카드 자리를 맞힌 개수 0~4
                     // 교통 문제에서 고른 보기 번호 (①=1, ②=2 ...)
                     q1_choice: this.choices.q1 || '', q3_choice: this.choices.q3 || '', q4_choice: this.choices.q4 || '',
                     q5_choice: this.choices.q5 || '', q6_choice: this.choices.q6 || '', q8_choice: this.choices.q8 || '',
@@ -2994,12 +3059,13 @@
                     ...this.signalRTSummary(),
                     ...this.videoSummary(),
                     ...this.reviewSummary(),
+                    ...this.cardSummary(),
                     ...this.nbackSummary(),
                     ...this.signalRound2Summary(),
                     ...(this.cogmate || {}),
                     sensorMotion: ResearchLog.peek() && ResearchLog.peek().motionSeen ? 1 : 0,
                     sensorPermission: ResearchLog.peek() ? ResearchLog.peek().sensorPermission : '',
-                    logVersion: 3
+                    logVersion: 4
                 };
             },
 
@@ -3017,6 +3083,20 @@
                     vid_watchPct: mean(played.map(v => v.pct)),           // 답할 때까지 본 비율 평균 (%)
                     vid_afterEndMs: mean(after),                         // 영상이 끝난 뒤 답하기까지 평균 (ms)
                     vid_earlyList: early.map(v => v.q || '').join(',')
+                };
+            },
+
+            // [연구] Q16 카드 위치 기억 요약
+            cardSummary() {
+                const r = this.cardResults || [];
+                if (!r.length) return {};
+                const mean = (a) => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10 : '';
+                return {
+                    cd_n: r.length,
+                    cd_hits: r.filter(x => x.correct).length,
+                    cd_rtMean: Math.round(mean(r.map(x => x.rt))),
+                    cd_distMean: mean(r.map(x => x.dist)),            // 틀렸을 때 정답 자리와 떨어진 칸 수 (맞으면 0)
+                    cd_detail: r.map(x => `${x.target}:${x.correct ? 1 : 0}`).join(',')
                 };
             },
 
@@ -3137,8 +3217,8 @@
                 const info = {
                     orientation: { name: '날짜·계절 (지남력)', icon: 'fa-calendar-day', max: 25, meaning: '오늘 날짜와 계절을 아는 능력',
                         good: "날짜와 계절을 정확히 알고 계십니다.", mid: "날짜가 조금 헷갈리셨네요. 달력을 자주 보는 습관이 도움이 됩니다.", bad: "날짜나 계절 감각이 흐릿합니다. 매일 아침 달력을 확인하세요." },
-                    memory: { name: '기억력', icon: 'fa-brain', max: 20, meaning: '처음에 본 표지판을 기억하는 능력',
-                        good: "처음에 본 표지판을 모두 기억하셨습니다.", mid: "표지판 하나를 놓치셨네요. 중요한 것은 적어두면 좋습니다.", bad: "방금 본 것을 떠올리기 어려우셨네요. 메모하는 습관을 들여보세요." },
+                    memory: { name: '기억력', icon: 'fa-brain', max: 20, meaning: '표지판이 어디 있었는지 기억하는 능력',
+                        good: "표지판 자리를 모두 기억하셨습니다.", mid: "표지판 자리를 한두 개 놓치셨네요. 중요한 것은 적어두면 좋습니다.", bad: "방금 본 것을 떠올리기 어려우셨네요. 메모하는 습관을 들여보세요." },
                     executive: { name: '집행기능', icon: 'fa-traffic-light', max: 15, meaning: '신호에 맞게 누르고 참는 능력',
                         good: "신호에 맞춰 정확하게 판단하셨습니다.", mid: "가끔 신호와 다르게 반응하셨습니다. 한 박자 쉬고 움직이세요.", bad: "신호에 맞춰 반응하기 어려우셨네요. 건너기 전에 신호를 꼭 다시 확인하세요." },
                     visuospatial: { name: '시공간', icon: 'fa-clock', max: 10, meaning: '방향과 위치를 파악하는 능력 (시계 그리기)',
