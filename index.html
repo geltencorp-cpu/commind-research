@@ -1231,7 +1231,8 @@
                 };
 
                 // 빈 곳 터치 감지: 버튼·입력칸·영상 터치와 스크롤(손가락 이동)은 제외
-                const INTERACTIVE = 'button, input, label, a, canvas, .media-wrapper, #consent-modal';
+                // [연구] Q16 카드(보여 주는 중)·Q17 그림처럼 눌러 볼 만한 과제 그림은 '빈 곳 누름'으로 세지 않음
+                const INTERACTIVE = 'button, input, label, a, canvas, .media-wrapper, #consent-modal, .card-grid, .nb-card';
                 let touch = null;
                 document.body.addEventListener('touchstart', (e) => {
                     const t = e.touches[0];
