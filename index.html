@@ -21,7 +21,29 @@
     
     <style>
         /* 1. 기본 설정 */
-        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+        /* [수정] 두 손가락 확대·두 번 눌러 확대 막기 (스크롤은 그대로) */
+        html, body { touch-action: pan-x pan-y; }
+        img { -webkit-user-drag: none; user-drag: none; }
+        input, textarea { user-select: text; -webkit-user-select: text; }
+        /* [연구] 영상 문제: 1분 보기 전에는 답 버튼을 흐리게 (눌러도 넘어가지 않고 눌린 횟수만 기록) */
+        .vgate-msg { display: none; margin: 4px 0 10px; font-family: 'Jua', sans-serif; font-size: clamp(18px, 2.6vh, 24px); color: #e67e22; text-align: center; }
+        .vgate-msg.show { display: block; }
+        .vgate-msg.open { color: #1e8449; }
+        .vgate-msg.shake { animation: vgshake .35s; }
+        @keyframes vgshake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+        .vgate-locked .text-area .btn-option { opacity: .4; }
+        .btn-bigvideo { align-self: center; margin-top: 4px; padding: 8px 22px; border-radius: 24px; border: 2px solid #ddd; background: #fff; font-family: 'Jua', sans-serif; font-size: clamp(17px, 2.4vh, 22px); color: #34495e; cursor: pointer; }
+        .big-video .media-group { position: fixed; inset: 0; z-index: 900; background: #111; padding: 12px; justify-content: center; align-items: center; gap: 12px; }
+        .big-video .media-group .video-guide-text { display: none; }
+        .big-video .media-wrapper { width: min(100%, calc((100vh - 90px) * 16 / 9)); }
+        .big-video .btn-bigvideo { background: #ffaa00; border-color: #ffaa00; color: #fff; }
+        /* 세로 화면에서는 영상이 이미 가로로 꽉 차므로 크게 보기 버튼 숨김, 안내 줄 간격 줄임 */
+        @media (orientation: portrait) {
+            .btn-bigvideo { display: none; }
+            .vgate-msg { margin: 0 0 4px; font-size: clamp(16px, 2vh, 20px); }
+            .vgate-locked .media-wrapper, .slide-container:has(.vgate-msg.show) .media-wrapper { width: 88%; align-self: center; }
+        }
         html, body {
             margin: 0; padding: 0;
             background-color: #f0f2f5;
@@ -1319,6 +1341,69 @@
             }
         };
 
+        // [연구] 영상 문제 잠금: 영상을 1분(재생된 시간 기준) 보기 전에는 답을 고를 수 없음 (충분한 학습을 위해)
+        // - 1분보다 짧은 영상은 끝까지 보면 풀림
+        // - 영상이 아예 안 뜨면(인터넷 문제) 1분 뒤 풀림, 멈춰 두는 경우를 대비해 최대 2분 뒤에는 풀림
+        // - 잠긴 동안 답을 누른 횟수를 '조급함' 지표로 기록
+        const VideoGate = {
+            MIN_MS: 60000, NOPLAY_MS: 60000, CAP_MS: 120000,
+            page: null, q: null, enterAt: 0, lastTick: 0, watched: 0, open: true, taps: 0, timer: null, results: {},
+            msg() { return this.page ? this.page.querySelector('.vgate-msg') : null; },
+            enter(page, q) {
+                this.stop();
+                this.page = page; this.q = q;
+                const m = this.msg();
+                if (this.results[q] || !m) {          // 이미 풀었던 문제로 돌아오면 바로 열림
+                    this.open = true; page.classList.remove('vgate-locked');
+                    if (m) { m.className = 'vgate-msg show open'; m.innerText = '답을 골라 주세요'; }
+                    return;
+                }
+                this.open = false; this.taps = 0; this.watched = 0;
+                this.enterAt = this.lastTick = performance.now();
+                page.classList.add('vgate-locked');
+                m.className = 'vgate-msg show';
+                ResearchLog.event('video_gate', { q, phase: 'lock', minMs: this.MIN_MS });
+                this.timer = setInterval(() => this.tick(), 250);
+                this.tick();
+            },
+            tick() {
+                if (this.open) return;
+                const t = performance.now(), wall = t - this.enterAt;
+                if (VideoSound.state === 1) this.watched += t - this.lastTick;
+                this.lastTick = t;
+                const snap = VideoSound.snapshot();
+                const reason = this.watched >= this.MIN_MS ? 'watched' : (snap && snap.ended) ? 'ended'
+                    : (!VideoSound.connected && wall >= this.NOPLAY_MS) ? 'noplayer' : (wall >= this.CAP_MS) ? 'cap' : null;
+                if (reason) return this.unlock(reason, wall);
+                const m = this.msg(), left = Math.max(1, Math.ceil((this.MIN_MS - this.watched) / 1000));
+                if (m) m.innerText = VideoSound.state === 1 ? `영상을 보고 있어요 · ${left}초 뒤에 답할 수 있어요` : '영상을 끝까지 봐 주세요. 영상을 보신 뒤에 답할 수 있어요';
+            },
+            unlock(reason, wall) {
+                this.open = true; clearInterval(this.timer); this.timer = null;
+                this.page.classList.remove('vgate-locked');
+                const m = this.msg();
+                if (m) { m.className = 'vgate-msg show open'; m.innerText = '이제 답을 골라 주세요'; }
+                this.results[this.q] = { reason, unlockMs: Math.round(wall), watchedMs: Math.round(this.watched), lockedTaps: this.taps };
+                ResearchLog.event('video_gate', Object.assign({ q: this.q, phase: 'open' }, this.results[this.q]));
+            },
+            blocked(q) {
+                if (this.open || q !== this.q) return false;
+                this.taps++;
+                ResearchLog.event('video_locked_tap', { q, n: this.taps, watchedMs: Math.round(this.watched) });
+                const m = this.msg();
+                if (m) { m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake'); }
+                return true;
+            },
+            stop() {
+                clearInterval(this.timer); this.timer = null;
+                if (this.page && !this.open && this.taps) {    // 풀리기 전에 다른 화면으로 간 경우에도 누른 횟수는 남김
+                    this.results['_left' + this.q] = { reason: 'left', lockedTaps: this.taps };
+                }
+                this.page = null; this.q = null; this.open = true;
+            },
+            reset() { this.stop(); this.results = {}; }
+        };
+
         // [NEW] 유튜브 영상 소리 제어
         // 영상은 음소거 상태로 자동 재생을 시작한 뒤(모든 기기에서 재생 보장), 곧바로 소리를 켭니다.
         // 브라우저가 소리 자동 재생을 막는 기기에서는 큰 '소리 켜기' 버튼을 보여줍니다.
@@ -2352,6 +2437,25 @@
                     const b = e.target.closest ? e.target.closest('.btn-option') : null;
                     if (b) this.lastOpt = Number(b.dataset.opt) || '';
                 }, true);
+                // [수정] 유튜브 자체 전체 화면 끄기(fs=0): 앱 전체 화면이 풀리고 화면 확대가 켜지는 문제 방지. 대신 '크게 보기' 버튼
+                document.querySelectorAll('.media-wrapper iframe[data-src]').forEach(f => {
+                    if (!/[?&]fs=0/.test(f.dataset.src)) f.dataset.src += '&fs=0';
+                    f.removeAttribute('allowfullscreen');
+                    const page = f.closest('.slide-container'), ta = page && page.querySelector('.text-area');
+                    if (ta && !ta.querySelector('.vgate-msg')) {
+                        const m = document.createElement('p'); m.className = 'vgate-msg';
+                        const h = ta.querySelector('h2'); h ? h.after(m) : ta.prepend(m);
+                    }
+                    const g = f.closest('.media-group');
+                    if (g && !g.querySelector('.btn-bigvideo')) {
+                        const b = document.createElement('button'); b.type = 'button'; b.className = 'btn-bigvideo';
+                        b.innerHTML = '<i class="fa-solid fa-expand"></i> 영상 크게 보기';
+                        b.onclick = () => this.toggleBigVideo(page, b);
+                        g.appendChild(b);
+                    }
+                });
+                // [수정] 길게 누르면 나오는 메뉴(다운로드·공유 등) 막기. 입력칸은 그대로
+                document.addEventListener('contextmenu', (e) => { if (!(e.target.closest && e.target.closest('input, textarea'))) e.preventDefault(); });
                 InstPicker.init();
                 Profile.init();
                 BehaviorTracker.init();
@@ -2359,6 +2463,14 @@
                 this.showToast("앱이 준비되었습니다.");
             },
             
+            // [수정] 영상만 화면 가득 크게 보기 (앱 안에서 키우므로 전체 화면 상태가 바뀌지 않음)
+            toggleBigVideo(page, btn) {
+                const on = !page.classList.contains('big-video');
+                page.classList.toggle('big-video', on);
+                btn.innerHTML = on ? '<i class="fa-solid fa-compress"></i> 작게 보기 (답 고르기)' : '<i class="fa-solid fa-expand"></i> 영상 크게 보기';
+                ResearchLog.event('video_big', { on });
+            },
+
             // [수정] 전체 화면 토글 기능 추가 (HTML 버튼에서 호출)
             toggleFullScreen() {
                 BehaviorTracker.toggleFullScreen();
@@ -2431,6 +2543,7 @@
             resetVariables() {
                 this.answers = { q1:0, q2:0, q3:0, q4:0, q5:0, q6:0, q7:0, q8:0, q9:0, q10:0, q11:0, q12:0 };
                 this.answeredAt = {}; this.reviews = {};
+                VideoGate.reset();
                 this.dateInput = { month: "", day: "" };
                 this.inputStep = 'month';
                 this.selectedSeason = "";
@@ -2593,6 +2706,11 @@
             },
 
             goToSlide(id) {
+                VideoGate.stop();
+                document.querySelectorAll('.big-video').forEach(p => {
+                    p.classList.remove('big-video');
+                    const b = p.querySelector('.btn-bigvideo'); if (b) b.innerHTML = '<i class="fa-solid fa-expand"></i> 영상 크게 보기';
+                });
                 VideoSound.detach();
                 SignalTask.stop();
                 NBackTask.stop();
@@ -2616,6 +2734,7 @@
                     if (iframe && iframe.dataset.src) {
                         VideoSound.attach(iframe);
                         iframe.setAttribute('src', iframe.dataset.src);
+                        VideoGate.enter(target, parseInt(id.substring(1)));
                     }
                 }
                 let progress = 0;
@@ -2644,6 +2763,7 @@
             },
 
             answer(qNum, score) {
+                if (VideoGate.blocked(qNum)) { this.lastOpt = ''; return; }   // [연구] 영상 1분 전에는 넘어가지 않음 (누른 횟수만 기록)
                 // 반응 시간은 영상이 없는 문제(Q9~Q12)에서만 측정 (영상 시청 시간이 섞이지 않도록)
                 if (qNum >= 9 && qNum <= 12) BehaviorTracker.recordReaction();
                 this.answers['q' + qNum] = score;
@@ -3075,7 +3195,7 @@
                     ...(this.cogmate || {}),
                     sensorMotion: ResearchLog.peek() && ResearchLog.peek().motionSeen ? 1 : 0,
                     sensorPermission: ResearchLog.peek() ? ResearchLog.peek().sensorPermission : '',
-                    logVersion: 4
+                    logVersion: 5
                 };
             },
 
@@ -3092,7 +3212,20 @@
                     vid_early: early.length,                             // 영상이 끝나기 전에 답한 문제 수
                     vid_watchPct: mean(played.map(v => v.pct)),           // 답할 때까지 본 비율 평균 (%)
                     vid_afterEndMs: mean(after),                         // 영상이 끝난 뒤 답하기까지 평균 (ms)
-                    vid_earlyList: early.map(v => v.q || '').join(',')
+                    vid_earlyList: early.map(v => v.q || '').join(','),
+                    ...this.videoGateSummary()
+                };
+            },
+
+            // [연구] 영상 잠금 요약: 잠긴 동안 답을 누른 횟수(조급함), 잠금이 풀린 이유
+            videoGateSummary() {
+                const r = VideoGate.results, qs = Object.keys(r);
+                if (!qs.length) return {};
+                const taps = qs.map(k => r[k].lockedTaps || 0);
+                return {
+                    vid_lockedTaps: taps.reduce((a, b) => a + b, 0),
+                    vid_lockedTapQs: qs.filter(k => r[k].lockedTaps).map(k => k.replace('_left', '')).join(','),
+                    vid_unlock: qs.filter(k => !k.startsWith('_')).map(k => `${k}:${r[k].reason}`).join(',')
                 };
             },
 
