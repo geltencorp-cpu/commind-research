@@ -1358,7 +1358,7 @@
                     if (m) { m.className = 'vgate-msg show open'; m.innerText = '답을 골라 주세요'; }
                     return;
                 }
-                this.open = false; this.taps = 0; this.watched = 0;
+                this.open = false; this.taps = 0; this.watched = 0; this.first = null;
                 this.enterAt = this.lastTick = performance.now();
                 page.classList.add('vgate-locked');
                 m.className = 'vgate-msg show';
@@ -1383,13 +1383,15 @@
                 this.page.classList.remove('vgate-locked');
                 const m = this.msg();
                 if (m) { m.className = 'vgate-msg show open'; m.innerText = '이제 답을 골라 주세요'; }
-                this.results[this.q] = { reason, unlockMs: Math.round(wall), watchedMs: Math.round(this.watched), lockedTaps: this.taps };
+                this.results[this.q] = { reason, unlockMs: Math.round(wall), watchedMs: Math.round(this.watched), lockedTaps: this.taps, first: this.first };
                 ResearchLog.event('video_gate', Object.assign({ q: this.q, phase: 'open' }, this.results[this.q]));
             },
-            blocked(q) {
+            blocked(q, opt, score) {
                 if (this.open || q !== this.q) return false;
                 this.taps++;
-                ResearchLog.event('video_locked_tap', { q, n: this.taps, watchedMs: Math.round(this.watched) });
+                const correct = score >= 10 ? 1 : 0;
+                if (!this.first) this.first = { opt: opt || '', correct };   // 잠긴 동안 처음 고른 답 (영상 보기 전 생각)
+                ResearchLog.event('video_locked_tap', { q, n: this.taps, opt: opt || '', correct, watchedMs: Math.round(this.watched) });
                 const m = this.msg();
                 if (m) { m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake'); }
                 return true;
@@ -1397,7 +1399,7 @@
             stop() {
                 clearInterval(this.timer); this.timer = null;
                 if (this.page && !this.open && this.taps) {    // 풀리기 전에 다른 화면으로 간 경우에도 누른 횟수는 남김
-                    this.results['_left' + this.q] = { reason: 'left', lockedTaps: this.taps };
+                    this.results['_left' + this.q] = { reason: 'left', lockedTaps: this.taps, first: this.first };
                 }
                 this.page = null; this.q = null; this.open = true;
             },
@@ -2763,7 +2765,7 @@
             },
 
             answer(qNum, score) {
-                if (VideoGate.blocked(qNum)) { this.lastOpt = ''; return; }   // [연구] 영상 1분 전에는 넘어가지 않음 (누른 횟수만 기록)
+                if (VideoGate.blocked(qNum, this.lastOpt, score)) { this.lastOpt = ''; return; }   // [연구] 영상 1분 전에는 넘어가지 않음 (누른 횟수만 기록)
                 // 반응 시간은 영상이 없는 문제(Q9~Q12)에서만 측정 (영상 시청 시간이 섞이지 않도록)
                 if (qNum >= 9 && qNum <= 12) BehaviorTracker.recordReaction();
                 this.answers['q' + qNum] = score;
@@ -3225,8 +3227,23 @@
                 return {
                     vid_lockedTaps: taps.reduce((a, b) => a + b, 0),
                     vid_lockedTapQs: qs.filter(k => r[k].lockedTaps).map(k => k.replace('_left', '')).join(','),
-                    vid_unlock: qs.filter(k => !k.startsWith('_')).map(k => `${k}:${r[k].reason}`).join(',')
+                    vid_unlock: qs.filter(k => !k.startsWith('_')).map(k => `${k}:${r[k].reason}`).join(','),
+                    ...this.videoLearnSummary()
                 };
+            },
+
+            // [연구] 잠긴 동안 처음 고른 답 → 영상을 다 본 뒤 최종 답. 틀림→맞음 = 영상으로 배움
+            videoLearnSummary() {
+                const r = VideoGate.results, circ = n => n ? `보기${n}` : '?';   // 보기 번호는 화면 순서가 아닌 원래 번호 (선택 칸과 같음)
+                const picks = [], learned = [];
+                Object.keys(r).filter(k => !k.startsWith('_') && r[k].first).forEach(k => {
+                    const f = r[k].first, fin = this.answers['q' + k], finOpt = this.choices['q' + k];
+                    const finOk = typeof fin === 'number' ? (fin >= 10 ? 1 : 0) : null;
+                    picks.push(`Q${k} ${circ(f.opt)} ${f.correct ? '맞음' : '틀림'} → ` + (finOk === null ? '미응답' : `${circ(finOpt)} ${finOk ? '맞음' : '틀림'}`));
+                    if (!f.correct && finOk === 1) learned.push(k);
+                });
+                if (!picks.length) return { vid_lockedPick: '', vid_learned: 0 };
+                return { vid_lockedPick: picks.join(', '), vid_learned: learned.length };
             },
 
             // [연구] Q16 카드 위치 기억 요약
