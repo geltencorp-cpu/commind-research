@@ -308,6 +308,9 @@ function doGet(e) {
     return json({ ok: true, places: places });
   }
 
+  // 집 PC 동기화용: 비밀 열쇠(스크립트 속성 SYNC_KEY)가 맞을 때만 기록과 원시 기록을 돌려줌
+  if (p.action === 'sync' || p.action === 'raw') return syncGet(ss, p);
+
   // 인사이트 페이지용: 비밀번호가 맞으면 전화번호를 뺀 기록과 기관 목록을 돌려줌
   if (INSIGHT_PASSWORD === '여기에-비밀번호') {
     return json({ ok: false, error: '시트 스크립트에서 비밀번호를 먼저 정해 주세요.' });
@@ -341,4 +344,66 @@ function doGet(e) {
   }
 
   return json({ ok: true, rows: rows, institutions: readInstitutions(ss) });
+}
+
+// ===== [연구] 집 PC 동기화 (집 PC가 몇 분마다 가져감. 집 PC를 인터넷에 열지 않으려고 '가져가기' 방식) =====
+// 비밀 열쇠: Apps Script 편집기 → 프로젝트 설정(톱니바퀴) → 스크립트 속성 → 속성 'SYNC_KEY', 값은 20자 이상 아무 글자
+//   action=sync&key=…            → 시트 기록 전체(전화번호 제외) + 원시 기록 파일 목록
+//   action=raw&key=…&id=기록ID    → 그 기록의 원시 기록(JSON)
+function syncGet(ss, p) {
+  var key = PropertiesService.getScriptProperties().getProperty('SYNC_KEY') || '';
+  if (key.length < 20) return json({ ok: false, error: '스크립트 속성 SYNC_KEY 를 20자 이상으로 먼저 정해 주세요.' });
+  if (!p.key || !sameText(p.key, key)) return json({ ok: false, error: '열쇠가 맞지 않습니다.' });
+
+  if (p.action === 'raw') {
+    var id = String(p.id || '').replace(/[^A-Za-z0-9_-]/g, '');
+    if (!id) return json({ ok: false, error: 'id 가 없습니다.' });
+    var files = getRawFolder().searchFiles("title contains '" + id + "' and trashed = false");
+    while (files.hasNext()) {
+      var f = files.next();
+      if (f.getName().slice(-(id.length + 5)) === id + '.json') {
+        return ContentService.createTextOutput(f.getBlob().getDataAsString('UTF-8')).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    return json({ ok: false, error: '원시 기록이 없습니다: ' + id });
+  }
+
+  var sheet = ss.getSheets()[0];
+  var titleToKey = {};
+  COLUMNS.forEach(function (c) { titleToKey[c[0]] = c[1]; });
+  var rows = [];
+  if (sheet.getLastRow() > 1) {
+    var values = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
+    var head = values[0];
+    for (var r = 1; r < values.length; r++) {
+      var o = {};
+      for (var c = 0; c < head.length; c++) {
+        var k = titleToKey[head[c]];
+        if (!k) continue;
+        var v = values[r][c];
+        if (v instanceof Date) v = v.toISOString();
+        o[k] = v;
+      }
+      if (!o.recordId) continue;
+      delete o.phone;                          // 전화번호는 집 PC로 보내지 않음
+      rows.push(o);
+    }
+  }
+  var raws = [];
+  var rawSheet = ss.getSheetByName('원시기록');
+  if (rawSheet && rawSheet.getLastRow() > 1) {
+    rawSheet.getRange(2, 1, rawSheet.getLastRow() - 1, 4).getValues().forEach(function (v) {
+      if (v[0]) raws.push({ recordId: String(v[0]), code: String(v[1]), savedAt: v[2] instanceof Date ? v[2].toISOString() : String(v[2]), file: String(v[3]) });
+    });
+  }
+  return json({ ok: true, columns: COLUMNS.map(function (c) { return c[1]; }), rows: rows, raws: raws, at: new Date().toISOString() });
+}
+
+// 열쇠 비교 (글자 수가 같을 때 끝까지 비교)
+function sameText(a, b) {
+  a = String(a); b = String(b);
+  if (a.length !== b.length) return false;
+  var d = 0;
+  for (var i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
 }
