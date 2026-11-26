@@ -6,3 +6,6 @@ __pycache__/
 server/data/
 server/models/
 server/.venv/
+# 비밀 열쇠 (동기화 SYNC_KEY 등)는 올리지 않음
+.env
+server/.env
